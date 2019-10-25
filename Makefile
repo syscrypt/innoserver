@@ -8,7 +8,7 @@ BLD    = build
 all: build run
 
 build:
-		@mkdir -p $(BINDIR)
+		@mkdir $(BINDIR)
 		$(CC) $(BLD) -o $(BINDIR)$(EXEC) $(SRCDIR)$(SRC)
 
 run:
