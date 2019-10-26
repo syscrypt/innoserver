@@ -1,0 +1,35 @@
+version: '3.3'
+services:
+  db:
+    image: mariadb
+    environment:
+      - MYSQL_USER=ip
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=innovision
+    ports:
+      - "0.0.0.0:3308:3306"
+    volumes:
+     - ./db-data/database:/var/lib/mysql
+    networks:
+      - back
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.build
+    environment:
+      - DATABASE_CONN=ip:password@tcp(database:3306)/innovision?parseTime=true
+      - AUTOMIGRATE=true
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - back
+      - front
+
+networks:
+  front:
+     driver: bridge
+  back:
+     driver: bridge
