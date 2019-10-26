@@ -1,0 +1,7 @@
+FROM golang
+WORKDIR /go/src/gitlab.com/ip
+ADD /init/wait-for-it.sh /go/bin
+WORKDIR /go/bin
+RUN chmod +x wait-for-it.sh
+EXPOSE 8080
+CMD ["./wait-for-it.sh", "innoserver:3306", "--", "ip"]
