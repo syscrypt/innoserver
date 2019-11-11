@@ -8,12 +8,12 @@ BLD    = build
 DBPW   = password
 DB     = innovision
 DBUSR  = ip
-DBPORT = 3308
+DBPORT = 3306
 
 all: build run
 
 build:
-	@mkdir $(BINDIR)
+	@mkdir -p $(BINDIR)
 	$(CC) $(BLD) -o $(BINDIR)$(EXEC) $(SRCDIR)$(SRC)
 
 run:
