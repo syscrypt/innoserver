@@ -39,3 +39,9 @@ or connect to the mysql client in the container
 ```sh
 docker exec -it <container_name> mysql -u root -p
 ```
+
+## Layout
+`./cmd`: Main applications for the project\
+`./pkg/repository`: Database interface service definition\
+`./pkg/model`: Model definitions for representing datastructures\
+`./pkg/handler`: Handler for route administration and handling of requests
