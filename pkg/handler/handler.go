@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -39,7 +38,7 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 
-	router.Path("/login").Methods("GET", "POST").HandlerFunc(s.login)
+	router.Path("/login").Methods("GET").HandlerFunc(s.Login)
 
 	router.ServeHTTP(w, r)
 }

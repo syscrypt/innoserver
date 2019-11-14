@@ -1,5 +1,8 @@
 package model
 
+// An user parameter model
+//
+// swagger:parameters login
 type User struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`

@@ -11,12 +11,21 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
+// A response for the login routine
+//
+// swagger:response loginResponse
 type Claims struct {
 	Username string `json:"username"`
 	jwt.StandardClaims
 }
 
-func (s *Handler) login(w http.ResponseWriter, r *http.Request) {
+// Login swagger:route POST /login user login
+//
+// Verifies user credentials and generates jw-token
+//
+// Responses:
+//        200: loginResponse
+func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	logrus.Println(creds)
