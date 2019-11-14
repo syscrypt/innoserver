@@ -11,6 +11,11 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
 func (s *Handler) login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)

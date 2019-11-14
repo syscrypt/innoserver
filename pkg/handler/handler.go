@@ -22,11 +22,6 @@ type Handler struct {
 	userRepo userRepository
 }
 
-type Claims struct {
-	Username string `json:"username"`
-	jwt.StandardClaims
-}
-
 func NewHandler(injections ...interface{}) *Handler {
 	handler := &Handler{}
 
