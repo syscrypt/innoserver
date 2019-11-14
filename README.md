@@ -45,14 +45,3 @@ docker exec -it <container_name> mysql -u root -p
 `./pkg/repository`: Database interface service definition\
 `./pkg/model`: Model definitions for representing datastructures\
 `./pkg/handler`: Handler for route administration and handling of requests
-
-User Login
-- get data as JSON 
-- get username, E-mail, IMEI, ggf. passwort(in case of changing IMEI)
-
-Response: 
-- JSON Token Authentication stateless Base64
-- Make restrictions -> get data from Server
-
-- Data has included Timestamps
-        - from time on the next 10 entries

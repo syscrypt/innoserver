@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	dqlGetByUsername = `SELECT * FROM users WHERE name = ?`
+	dqlGetByUsername = `SELECT * FROM users WHERE name = ? LIMIT 1`
 )
 
 type userRepository struct {
@@ -31,6 +31,6 @@ func NewUserRepository(db *sqlx.DB) (*userRepository, error) {
 
 func (s *userRepository) GetByUsername(ctx context.Context, name string) (*model.User, error) {
 	user := &model.User{}
-	err := s.getByUsername.GetContext(ctx, &user, name)
+	err := s.getByUsername.GetContext(ctx, user, name)
 	return user, err
 }

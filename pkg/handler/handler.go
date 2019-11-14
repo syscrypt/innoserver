@@ -46,7 +46,7 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 
-	router.Path("/login").Methods("GET").HandlerFunc(s.login)
+	router.Path("/login").Methods("GET", "POST").HandlerFunc(s.login)
 
 	router.ServeHTTP(w, r)
 }
@@ -54,12 +54,19 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Handler) login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
+	logrus.Println(creds)
 	if err != nil {
+		logrus.Errorln("login: error decoding json body", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
 	expirationTime := time.Now().Add(5 * time.Minute)
+
+	if _, err = s.userRepo.GetByUsername(r.Context(), creds.Name); err != nil {
+		logrus.Errorln(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	claims := &Claims{
 		Username: creds.Name,
