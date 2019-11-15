@@ -1,0 +1,71 @@
+basePath: /
+consumes:
+- application/json
+host: localhost
+info:
+  description: Innoserver
+  termsOfService: there are no TOS at this moment, use at your own risk we take no
+    responsibility
+  title: 'Title:'
+  version: 0.0.1
+paths:
+  /login:
+    post:
+      description: Verifies user credentials and generates jw-token
+      operationId: login
+      parameters:
+      - format: int64
+        in: query
+        name: id
+        type: integer
+        x-go-name: ID
+      - in: query
+        name: name
+        type: string
+        x-go-name: Name
+      - in: query
+        name: email
+        type: string
+        x-go-name: Email
+      - in: query
+        name: imei
+        type: string
+        x-go-name: Imei
+      - in: query
+        name: password
+        type: string
+        x-go-name: Password
+      responses:
+        "200":
+          $ref: '#/responses/loginResponse'
+      tags:
+      - user
+produces:
+- application/json
+responses:
+  loginResponse:
+    description: A response for the login routine
+    headers:
+      aud:
+        type: string
+      exp:
+        format: int64
+        type: integer
+      iat:
+        format: int64
+        type: integer
+      iss:
+        type: string
+      jti:
+        type: string
+      nbf:
+        format: int64
+        type: integer
+      sub:
+        type: string
+      username:
+        type: string
+schemes:
+- http
+- https
+swagger: "2.0"
