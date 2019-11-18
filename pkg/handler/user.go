@@ -23,8 +23,10 @@ type Claims struct {
 //
 // Verifies user credentials and generates jw-token
 //
-// Responses:
-//        200: loginResponse
+// responses:
+//     200: loginResponse
+//     400: description: bad request
+//     500: description: server internal error
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)

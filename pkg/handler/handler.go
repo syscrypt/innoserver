@@ -39,6 +39,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 
 	router.Path("/login").Methods("GET").HandlerFunc(s.Login)
+	router.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)
 
 	router.ServeHTTP(w, r)
 }

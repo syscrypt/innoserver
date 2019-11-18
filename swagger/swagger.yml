@@ -38,11 +38,29 @@ paths:
       responses:
         "200":
           $ref: '#/responses/loginResponse'
+        "400":
+          description: ' bad request'
+        "500":
+          description: ' server internal error'
       tags:
       - user
+  /uploadpost:
+    post:
+      description: 'description: Takes, processes and persist posts data'
+      operationId: uploadPost
+      responses:
+        "200":
+          description: ' post was uploaded successfully'
+      tags:
+      - post
 produces:
 - application/json
 responses:
+  errorResponse:
+    description: An error response model
+    headers:
+      message:
+        type: string
   loginResponse:
     description: A response for the login routine
     headers:
