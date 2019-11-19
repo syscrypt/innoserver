@@ -30,7 +30,6 @@ type Claims struct {
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
-	logrus.Println(creds)
 	if err != nil {
 		logrus.Errorln("login: error decoding json body", err)
 		w.WriteHeader(http.StatusBadRequest)
