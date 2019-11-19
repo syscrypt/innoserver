@@ -40,6 +40,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router.Path("/login").Methods("GET").HandlerFunc(s.Login)
 	router.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)
+	router.Path("/uploadpostfile").Methods("POST").HandlerFunc(s.UploadPostFile)
 
 	router.ServeHTTP(w, r)
 }

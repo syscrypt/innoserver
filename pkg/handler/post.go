@@ -27,7 +27,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	logrus.Print(post)
 }
 
-// UploadPost swagger:route POST /uploadpost post uploadPost
+// UploadPost swagger:route POST /uploadpostfile uploadPostFile
 //
 // description: Takes, processes and persist posts data
 //
@@ -35,7 +35,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 //     200: description: post was uploaded successfully
 //     400: description: bad request
 //     500: description: internal server error
-func (s *Handler) Upload(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) UploadPostFile(w http.ResponseWriter, r *http.Request) {
 	var maxSize int64
 	fileType := r.PostFormValue("type")
 	if fileType == "image" {
