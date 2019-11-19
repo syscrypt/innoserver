@@ -11,9 +11,13 @@ import (
 const (
 	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
 	dqlGetPostByTitle   = `SELECT * FROM posts WHERE title = ?`
+	persistPost         = `INSERT INTO posts
+						   (title, user_id, path, createdAt)
+						   VALUES (?, ?, ?, ?)`
 )
 
 type postRepository struct {
+	persist        *sqlx.Stmt
 	selectByUserID *sqlx.Stmt
 	getByTitle     *sqlx.Stmt
 }
@@ -21,6 +25,10 @@ type postRepository struct {
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	ctx := context.Background()
 
+	ctxPersistPost, err := db.PreparexContext(ctx, persistPost)
+	if err != nil {
+		return nil, err
+	}
 	ctxSelectByUserID, err := db.PreparexContext(ctx, dqlAllPostsByUserID)
 	if err != nil {
 		return nil, err
@@ -31,6 +39,7 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	}
 
 	return &postRepository{
+		persist:        ctxPersistPost,
 		selectByUserID: ctxSelectByUserID,
 		getByTitle:     ctxGetByTitle,
 	}, err
@@ -46,4 +55,9 @@ func (s *postRepository) GetByTitle(ctx context.Context, title string) (*model.P
 	post := &model.Post{}
 	err := s.getByTitle.SelectContext(ctx, post, title)
 	return post, err
+}
+
+func (c *postRepository) Persist(ctx context.Context, post *model.Post) error {
+	_, err := c.persist.ExecContext(ctx, post.Title, post.UserID, post.Path, post.CreatedAt)
+	return err
 }
