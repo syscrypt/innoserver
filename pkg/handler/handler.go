@@ -40,7 +40,7 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	authRouter := router.PathPrefix("/auth").Subrouter()
-	authRouter.Path("/register").Methods("POST").HandlerFunc(s.Register)
+	authRouter.Path("/login").Methods("POST").HandlerFunc(s.Login)
 
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)

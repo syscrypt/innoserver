@@ -19,7 +19,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// Login swagger:route POST /register user register
+// Login swagger:route POST /login user login
 //
 // Verifies user credentials and generates jw-token
 //
@@ -27,7 +27,7 @@ type Claims struct {
 //     200: loginResponse
 //     400: description: bad request
 //     500: description: server internal error
-func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
