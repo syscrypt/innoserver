@@ -59,3 +59,43 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
+func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
+	var creds model.User
+
+	err := json.NewDecoder(r.Body).Decode(&creds)
+	if err != nil {
+		logrus.Errorln("register: error decoding json body", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err = s.userRepo.Persist(r.Context(), &creds)
+	if err != nil {
+		logrus.Errorln("register: could not persist user")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	expiration := time.Now().Add(5 * time.Hour)
+
+	claims := &Claims{
+		Username: creds.Name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expiration.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtKey)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := w.Write([]byte(tokenString)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+}

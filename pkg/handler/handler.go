@@ -17,6 +17,7 @@ var jwtKey = []byte("secret")
 
 type userRepository interface {
 	GetByUsername(ctx context.Context, name string) (*model.User, error)
+	Persist(ctx context.Context, user *model.User) error
 }
 
 type Handler struct {
