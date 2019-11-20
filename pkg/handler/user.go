@@ -19,7 +19,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// Login swagger:route POST /login user login
+// Login swagger:route POST /register user register
 //
 // Verifies user credentials and generates jw-token
 //
@@ -27,7 +27,7 @@ type Claims struct {
 //     200: loginResponse
 //     400: description: bad request
 //     500: description: server internal error
-func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(5 * time.Hour)
 
 	if _, err = s.userRepo.GetByUsername(r.Context(), creds.Name); err != nil {
 		logrus.Errorln(err)

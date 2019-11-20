@@ -2,8 +2,10 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -19,13 +21,10 @@ type userRepository interface {
 
 type Handler struct {
 	userRepo userRepository
-
-	activeUsers map[string]*model.User
 }
 
 func NewHandler(injections ...interface{}) *Handler {
 	handler := &Handler{}
-	handler.activeUsers = make(map[string]*model.User)
 
 	for _, i := range injections {
 		switch v := i.(type) {
@@ -40,31 +39,42 @@ func NewHandler(injections ...interface{}) *Handler {
 
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
-	r = r.WithContext(context.WithValue(r.Context(), "activeUsers", s.activeUsers))
+	authRouter := router.PathPrefix("/auth").Subrouter()
+	authRouter.Path("/register").Methods("POST").HandlerFunc(s.Register)
 
-	router.Path("/login").Methods("GET").HandlerFunc(s.Login)
-	router.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)
-	router.Path("/uploadpostfile").Methods("POST").HandlerFunc(s.UploadPostFile)
+	postRouter := router.PathPrefix("/post").Subrouter()
+	postRouter.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)
+	postRouter.Path("/uploadpostfile").Methods("POST").HandlerFunc(s.UploadPostFile)
+	postRouter.Use(authenticationMiddleware)
 
-	router.Use(authenticationMiddleware)
 	router.ServeHTTP(w, r)
+
 }
 
 func authenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if activeUsers, ok := r.Context().Value("activeUsers").(map[string]*model.User); ok {
-			jwt := r.Header.Get("jwt")
-			if jwt != "" {
-				user := activeUsers[jwt]
-				if user != nil {
-					r = r.WithContext(context.WithValue(r.Context(), "user", user))
-					h.ServeHTTP(w, r)
-					return
+		tokenStr := r.Header.Get("jwt")
+		if tokenStr != "" {
+			claims := &Claims{}
+			_, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					errStr := "unexpected signing method"
+					logrus.Errorln(errStr)
+					return nil, errors.New(errStr)
 				}
+				return jwtKey, nil
+			})
+			if err != nil {
+				logrus.Errorln("parsing incoming jw-token failed:", err.Error())
+				w.WriteHeader(http.StatusUnauthorized)
+				return
 			}
+			r = r.WithContext(context.WithValue(r.Context(), "username", claims.Username))
+			logrus.Println("user " + claims.Username + " authenticated")
+			h.ServeHTTP(w, r)
+			return
 		}
-
 		w.WriteHeader(http.StatusUnauthorized)
-		h.ServeHTTP(w, r)
+		w.Write([]byte("Unauthorized!!!"))
 	})
 }
