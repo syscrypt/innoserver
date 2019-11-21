@@ -1,6 +1,6 @@
 SRC    = main.go
 SRCDIR = ./cmd/server/
-EXEC   = server
+EXEC   = innoserver
 BINDIR = ./bin/
 CC     = go
 BLD    = build
@@ -16,9 +16,11 @@ SCHEMA   = ./init/schema.sql
 DEMODATA = ./init/demodata.sql
 
 SWAGGERDEF=SWAGGER_JSON
+SWAGGERUIPORT=9000
+SWAGGERUIPROT=http
 
 SWAGGERDIR   = swagger
-API_HOST     = $(APP_PROTOC)://$(APP_HOST):$(APP_PORT)
+API_HOST     = $(SWAGGERUIPROT)://localhost:$(SWAGGERUIPORT)
 
 ifeq ($(SWAGGERDEF),SWAGGER_JSON)
 	SWAGGERFILE=swagger.json
@@ -26,16 +28,18 @@ else
 	SWAGGERFILE=swagger.yml
 endif
 
+all: swag-gen-doc build run-docker run
 
 build:
 	@mkdir -p $(BINDIR)
 	$(CC) $(BLD) -o $(BINDIR)$(EXEC) $(SRCDIR)$(SRC)
 
 run:
+	sleep 4
 	@$(BINDIR)$(EXEC)
 
 run-docker:
-	docker-compose up
+	docker-compose up&
 
 init-database:
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB) < $(SCHEMA)
@@ -46,14 +50,25 @@ demodata:
 connect: 
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB)
 
-swag-doc: init
+swag-doc: 
 	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger serve $(SWAGGERDIR)/$(SWAGGERFILE)
 
-swag-gen-doc: init
+swag-gen-doc: 
 	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
 
-swagger-ui: init
-	docker run -p 9000:8080 -e $(SWAGGERDEF)=/mnt/$(SWAGGERFILE) -e API_URL=$(API_HOST):$(API_PORT) -v ${PWD}:/mnt swaggerapi/swagger-ui
+swagger-ui:
+	docker run -p $(SWAGGERUIPORT):8080 --rm --name swagger_ui -e $(SWAGGERDEF)=/mnt/$(SWAGGERFILE) \
+	       	-e API_URL=$(API_HOST)/$(SWAGGERFILE) \
+		-v ${PWD}:/mnt \
+		-v ${PWD}/$(SWAGGERDIR)/$(SWAGGERFILE):/usr/share/nginx/html/$(SWAGGERFILE) \
+		swaggerapi/swagger-ui
+
+shutdown:
+	-killall innoserver
+	-docker stop swagger_ui
+	-killall swagger
+	-docker-compose down
+
