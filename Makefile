@@ -4,17 +4,28 @@ EXEC   = server
 BINDIR = ./bin/
 CC     = go
 BLD    = build
+APP_PORT   = 5000
+APP_HOST   = 127.0.0.1
+APP_PROTOC = http
 
-DBPW   = password
-DB     = innovision
-DBUSR  = ip
-DBPORT = 3306
-SCHEMA = ./init/schema.sql
+DBPW     = password
+DB       = innovision
+DBUSR    = ip
+DBPORT   = 3306
+SCHEMA   = ./init/schema.sql
 DEMODATA = ./init/demodata.sql
 
-SWAGGERFILE = ./swagger/swagger.yml
+SWAGGERDEF=SWAGGER_JSON
 
-all: build run
+SWAGGERDIR   = swagger
+API_HOST     = $(APP_PROTOC)://$(APP_HOST):$(APP_PORT)
+
+ifeq ($(SWAGGERDEF),SWAGGER_JSON)
+	SWAGGERFILE=swagger.json
+else
+	SWAGGERFILE=swagger.yml
+endif
+
 
 build:
 	@mkdir -p $(BINDIR)
@@ -35,8 +46,14 @@ demodata:
 connect: 
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB)
 
-swag:
-	swagger generate spec -o $(SWAGGERFILE)
-	swagger validate $(SWAGGERFILE)
-	swagger serve $(SWAGGERFILE)
+swag-doc: init
+	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
+	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
+	swagger serve $(SWAGGERDIR)/$(SWAGGERFILE)
 
+swag-gen-doc: init
+	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
+	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
+
+swagger-ui: init
+	docker run -p 9000:8080 -e $(SWAGGERDEF)=/mnt/$(SWAGGERFILE) -e API_URL=$(API_HOST):$(API_PORT) -v ${PWD}:/mnt swaggerapi/swagger-ui
