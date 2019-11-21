@@ -9,7 +9,7 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// UploadPost swagger:route POST /uploadpost post uploadPost
+// UploadPost swagger:route POST /post/uploadpost post uploadPost
 //
 // description: Takes, processes and persist posts data
 //
@@ -27,7 +27,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	logrus.Print(post)
 }
 
-// UploadPost swagger:route POST /uploadpostfile uploadPostFile
+// UploadPost swagger:route POST /post/uploadpostfile uploadPostFile
 //
 // description: Takes, processes and persist posts data
 //

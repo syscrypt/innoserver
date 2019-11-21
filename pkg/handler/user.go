@@ -19,7 +19,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// Login swagger:route POST /login user login
+// Login swagger:route POST /auth/login user login
 //
 // Verifies user credentials and generates jw-token
 //
