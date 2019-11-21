@@ -53,7 +53,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func authenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenStr := r.Header.Get("jwt")
+		tokenStr := r.Header.Get("X-Auth-Token")
 		if tokenStr != "" {
 			claims := &Claims{}
 			_, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
