@@ -23,18 +23,19 @@ type Claims struct {
 //
 // Verifies user credentials and generates jw-token
 //
-// Responses:
-//        200: loginResponse
+// responses:
+//     200: loginResponse
+//     400: description: bad request
+//     500: description: server internal error
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
-	logrus.Println(creds)
 	if err != nil {
 		logrus.Errorln("login: error decoding json body", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	expirationTime := time.Now().Add(5 * time.Minute)
+	expirationTime := time.Now().Add(5 * time.Hour)
 
 	if _, err = s.userRepo.GetByUsername(r.Context(), creds.Name); err != nil {
 		logrus.Errorln(err)

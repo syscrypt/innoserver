@@ -1,6 +1,6 @@
 package model
 
-// An user parameter model
+// An user request model
 //
 // swagger:parameters login
 type User struct {
