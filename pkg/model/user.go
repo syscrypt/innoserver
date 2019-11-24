@@ -17,7 +17,7 @@ type User struct {
 
 // An user request model
 //
-// swagger:parameters login
+// swagger:parameters login register
 type LoginBodyParams struct {
 	// The user to submit
 	//
@@ -31,9 +31,9 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-// Response for login routine
+// Response for login and register routine
 //
-// swagger:response loginResponse
-type LoginResponse struct {
+// swagger:response tokenResponse
+type TokenResponse struct {
 	Token string `json:"token"`
 }
