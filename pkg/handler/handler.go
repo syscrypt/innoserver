@@ -17,6 +17,7 @@ var jwtKey = []byte("secret")
 
 type userRepository interface {
 	GetByUsername(ctx context.Context, name string) (*model.User, error)
+	Persist(ctx context.Context, user *model.User) error
 }
 
 type Handler struct {
@@ -44,6 +45,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
+	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(s.Register)
 
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)

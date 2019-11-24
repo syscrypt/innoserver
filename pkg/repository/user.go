@@ -10,10 +10,13 @@ import (
 
 const (
 	dqlGetByUsername = `SELECT * FROM users WHERE name = ? LIMIT 1`
+	persistUser      = `INSERT INTO users (name, email, imei, password)
+	               VALUES(?, ?, ?, ?)`
 )
 
 type userRepository struct {
-	getByUsername *sqlx.Stmt
+	getByUsername   *sqlx.Stmt
+	stmtPersistUser *sqlx.Stmt
 }
 
 func NewUserRepository(db *sqlx.DB) (*userRepository, error) {
@@ -24,8 +27,14 @@ func NewUserRepository(db *sqlx.DB) (*userRepository, error) {
 		return nil, err
 	}
 
+	ctxPersistUser, err := db.PreparexContext(ctx, persistUser)
+	if err != nil {
+		return nil, err
+	}
+
 	return &userRepository{
-		getByUsername: ctxGetByUsername,
+		getByUsername:   ctxGetByUsername,
+		stmtPersistUser: ctxPersistUser,
 	}, err
 }
 
@@ -33,4 +42,9 @@ func (s *userRepository) GetByUsername(ctx context.Context, name string) (*model
 	user := &model.User{}
 	err := s.getByUsername.GetContext(ctx, user, name)
 	return user, err
+}
+
+func (s *userRepository) Persist(ctx context.Context, user *model.User) error {
+	_, err := s.stmtPersistUser.ExecContext(ctx, user.Name, user.Email, user.Imei, user.Password)
+	return err
 }

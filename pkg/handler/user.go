@@ -11,24 +11,44 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
+func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) {
+	response := &model.TokenResponse{}
+	var err error
+	expirationTime := time.Now().Add(5 * time.Hour)
+
+	claims := &model.Claims{
+		Username: user.Name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationTime.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	response.Token, err = token.SignedString(jwtKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 // Login swagger:route POST /auth/login user login
 //
 // Verifies user credentials and generates jw-token
 //
 // responses:
-//     200: loginResponse
+//     200: tokenResponse
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	logrus.Info("login attempt made")
-	var creds model.User
-	err := json.NewDecoder(r.Body).Decode(&creds)
+	creds := &model.User{}
+	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
 		logrus.Errorln("login: error decoding json body", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	expirationTime := time.Now().Add(5 * time.Hour)
 
 	if _, err = s.userRepo.GetByUsername(r.Context(), creds.Name); err != nil {
 		logrus.Errorln(err)
@@ -36,26 +56,47 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims := &model.Claims{
-		Username: creds.Name,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
+	if token, err := s.generateToken(creds); err == nil {
+		w.WriteHeader(http.StatusOK)
+		ret, _ := json.Marshal(token)
+		w.Write(ret)
+		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+// Register swagger:route POST /auth/register user register
+//
+// Persists a user in the database and generates jw-token
+//
+// responses:
+//     200: tokenResponse
+//     400: description: bad request
+//     500: description: server internal error
+func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
+	logrus.Info("registration attempt made")
+	creds := &model.User{}
+	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
+		logrus.Errorln("register: error decoding json body", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = s.userRepo.Persist(r.Context(), creds)
+	if err != nil {
+		logrus.Errorln("register: could not persist user")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	lResp := &model.LoginResponse{
-		Token: tokenString,
-	}
-	if ret, err := json.Marshal(lResp); err == nil {
+	if token, err := s.generateToken(creds); err == nil {
+		w.WriteHeader(http.StatusOK)
+		ret, _ := json.Marshal(token)
 		w.Write(ret)
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	w.WriteHeader(http.StatusInternalServerError)
 }
