@@ -18,6 +18,7 @@ DEMODATA = ./init/demodata.sql
 SWAGGERDEF=SWAGGER_JSON
 SWAGGERUIPORT=9000
 SWAGGERUIPROT=http
+SWAGGERBIN=/usr/bin/swagger
 
 SWAGGERDIR   = swagger
 API_HOST     = $(SWAGGERUIPROT)://127.0.0.1:$(SWAGGERUIPORT)
@@ -51,13 +52,13 @@ connect:
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB)
 
 swag-doc:
-	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
-	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
-	swagger serve $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) validate $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) serve $(SWAGGERDIR)/$(SWAGGERFILE)
 
 swag-gen-doc:
-	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
-	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) validate $(SWAGGERDIR)/$(SWAGGERFILE)
 
 swagger-ui:
 	docker run -p $(SWAGGERUIPORT):8080 --rm --name swagger_ui -e $(SWAGGERDEF)=/mnt/$(SWAGGERFILE) \
