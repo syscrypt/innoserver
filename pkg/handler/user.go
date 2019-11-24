@@ -78,7 +78,7 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	expiration := time.Now().Add(5 * time.Hour)
 
-	claims := &Claims{
+	claims := &model.Claims{
 		Username: creds.Name,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expiration.Unix(),
