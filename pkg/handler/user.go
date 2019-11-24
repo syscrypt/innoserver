@@ -11,14 +11,6 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// A response for the login routine
-//
-// swagger:response loginResponse
-type Claims struct {
-	Username string `json:"username"`
-	jwt.StandardClaims
-}
-
 // Login swagger:route POST /auth/login user login
 //
 // Verifies user credentials and generates jw-token
@@ -28,6 +20,7 @@ type Claims struct {
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
+	logrus.Info("login attempt made")
 	var creds model.User
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
@@ -43,7 +36,7 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims := &Claims{
+	claims := &model.Claims{
 		Username: creds.Name,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
@@ -57,8 +50,12 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := w.Write([]byte(tokenString)); err != nil {
+	lResp := &model.LoginResponse{
+		Token: tokenString,
+	}
+	if ret, err := json.Marshal(lResp); err == nil {
+		w.Write(ret)
+	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
 }

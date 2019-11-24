@@ -21,6 +21,8 @@ type userRepository interface {
 
 type Handler struct {
 	userRepo userRepository
+
+	swaggerSpecs []byte
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -39,23 +41,38 @@ func NewHandler(injections ...interface{}) *Handler {
 
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
+
 	authRouter := router.PathPrefix("/auth").Subrouter()
-	authRouter.Path("/login").Methods("POST").HandlerFunc(s.Login)
+	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
 
 	postRouter := router.PathPrefix("/post").Subrouter()
-	postRouter.Path("/uploadpost").Methods("POST").HandlerFunc(s.UploadPost)
-	postRouter.Path("/uploadpostfile").Methods("POST").HandlerFunc(s.UploadPostFile)
+	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
+	postRouter.Path("/uploadpostfile").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPostFile)
 	postRouter.Use(authenticationMiddleware)
 
+	router.Use(corsMiddleware)
 	router.ServeHTTP(w, r)
+}
 
+func corsMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
 }
 
 func authenticationMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := r.Header.Get("X-Auth-Token")
 		if tokenStr != "" {
-			claims := &Claims{}
+			claims := &model.Claims{}
 			_, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					errStr := "unexpected signing method"
@@ -75,6 +92,5 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 			return
 		}
 		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Unauthorized!!!"))
 	})
 }

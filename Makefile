@@ -20,7 +20,7 @@ SWAGGERUIPORT=9000
 SWAGGERUIPROT=http
 
 SWAGGERDIR   = swagger
-API_HOST     = $(SWAGGERUIPROT)://localhost:$(SWAGGERUIPORT)
+API_HOST     = $(SWAGGERUIPROT)://127.0.0.1:$(SWAGGERUIPORT)
 
 ifeq ($(SWAGGERDEF),SWAGGER_JSON)
 	SWAGGERFILE=swagger.json
@@ -47,28 +47,26 @@ init-database:
 demodata:
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB) < $(DEMODATA)
 
-connect: 
+connect:
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB)
 
-swag-doc: 
+swag-doc:
 	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger serve $(SWAGGERDIR)/$(SWAGGERFILE)
 
-swag-gen-doc: 
+swag-gen-doc:
 	swagger generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
 	swagger validate $(SWAGGERDIR)/$(SWAGGERFILE)
 
 swagger-ui:
 	docker run -p $(SWAGGERUIPORT):8080 --rm --name swagger_ui -e $(SWAGGERDEF)=/mnt/$(SWAGGERFILE) \
-	       	-e API_URL=$(API_HOST)/$(SWAGGERFILE) \
+		-e API_URL=$(API_HOST)/$(SWAGGERFILE) \
 		-v ${PWD}:/mnt \
 		-v ${PWD}/$(SWAGGERDIR)/$(SWAGGERFILE):/usr/share/nginx/html/$(SWAGGERFILE) \
 		swaggerapi/swagger-ui
 
 shutdown:
 	-killall innoserver
-	-docker stop swagger_ui
 	-killall swagger
 	-docker-compose down
-
