@@ -2,57 +2,59 @@ package handler
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
+	"time"
 
-	"github.com/sirupsen/logrus"
-
-	_ "gitlab.com/innoserver/pkg/model"
+	"gitlab.com/innoserver/pkg/model"
 )
 
 // Uploads a file through http MultipartForm
 //
 // @param Request: the current request
 // @param maxSize: the maximum file size
-// @param file:    the multiparts file key which is the name of the uploaded
-//                 file
+// @param file:    the multiparts file key which is the name of the uploaded file
+//
 // @param fType:   determine if filetype is wether image or video
-func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType string) error {
+func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType int) (string, error) {
 	var outDir string
-	logrus.Infoln("file upload initialized")
-	r.ParseMultipartForm(maxSize)
+	parseError := r.ParseMultipartForm(maxSize)
+	if parseError != nil {
+		return "", parseError
+	}
+
 	upFile, handler, err := r.FormFile(file)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer upFile.Close()
-	logrus.Println("Fileheader:", handler.Header)
-	logrus.Println("Filesize:", handler.Size)
 	hash := sha256.New()
 
-	if fType == "image" {
-		outDir = "./assets/images"
+	contentType := handler.Header.Get("Content-Type")
+	extension := "." + contentType[strings.LastIndex(contentType, "/")+1:]
+
+	if fType == model.PostTypeImage {
+		outDir = "./assets/images/"
 	} else {
-		outDir = "./assets/videos"
+		outDir = "./assets/videos/"
 	}
 
-	io.WriteString(hash, handler.Filename+strconv.Itoa(rand.Int()))
-	temp, err := ioutil.TempFile("", "upload")
-	if err != nil {
-		return err
-	}
-	defer temp.Close()
+	rand.Seed(time.Now().UnixNano())
+	hash.Write([]byte(strconv.FormatInt(int64(rand.Uint64()), 10)))
+	sha := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
-	f, err := os.OpenFile(outDir+string(hash.Sum(nil)), os.O_WRONLY|os.O_CREATE, 0666)
+	outFile := outDir + sha[:len(sha)-1] + extension
+	f, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer f.Close()
-	io.Copy(f, temp)
+	io.Copy(f, upFile)
 
-	return nil
+	return outFile, nil
 }

@@ -15,5 +15,9 @@ CREATE TABLE posts (
   user_id int,
   path varchar(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  unique_id varchar(255) NOT NULL UNIQUE,
+  parent_uid varchar(255) NOT NULL,
+  method int NOT NULL,
+  type tinyint(1) NOT NULL,
   FOREIGN KEY(user_id) REFERENCES users(id)
 );

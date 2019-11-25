@@ -1,0 +1,10 @@
+{
+  "jwt_secret":"secret",
+  "server_address":"0.0.0.0",
+  "server_port":"5000",
+  "database":"innovision",
+  "database_user":"ip",
+  "database_password":"password",
+  "database_address":"127.0.0.1",
+  "database_port":"3306"
+}

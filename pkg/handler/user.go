@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -24,7 +25,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	response.Token, err = token.SignedString(jwtKey)
+	response.Token, err = token.SignedString(s.config.JwtSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -99,4 +100,16 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func (s *Handler) GetCurrentUser(r *http.Request) (*model.User, error) {
+	if username, ok := r.Context().Value("username").(string); ok {
+		if username == "" {
+			return nil, errors.New("no username provided")
+		}
+
+		return s.userRepo.GetByUsername(r.Context(), username)
+	}
+
+	return nil, errors.New("error fetching username in context values")
 }

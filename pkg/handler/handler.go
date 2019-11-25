@@ -12,18 +12,23 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// TODO load from config
-var jwtKey = []byte("secret")
-
 type userRepository interface {
 	GetByUsername(ctx context.Context, name string) (*model.User, error)
 	Persist(ctx context.Context, user *model.User) error
 }
 
+type postRepository interface {
+	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
+	GetByTitle(ctx context.Context, title string) (*model.Post, error)
+	Persist(ctx context.Context, post *model.Post) error
+}
+
 type Handler struct {
 	userRepo userRepository
+	postRepo postRepository
 
 	swaggerSpecs []byte
+	config       *model.Config
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -34,6 +39,12 @@ func NewHandler(injections ...interface{}) *Handler {
 		case userRepository:
 			logrus.Println("injectded user repository")
 			handler.userRepo = v
+		case postRepository:
+			logrus.Println("injected post repository")
+			handler.postRepo = v
+		case *model.Config:
+			logrus.Println("injected config struct")
+			handler.config = v
 		}
 	}
 
@@ -49,7 +60,6 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
-	postRouter.Path("/uploadpostfile").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPostFile)
 	postRouter.Use(authenticationMiddleware)
 
 	router.Use(corsMiddleware)

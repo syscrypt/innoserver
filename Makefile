@@ -4,6 +4,7 @@ EXEC   = innoserver
 BINDIR = ./bin/
 CC     = go
 BLD    = build
+CONFIG = ./init/config.json
 APP_PORT   = 5000
 APP_HOST   = 127.0.0.1
 APP_PROTOC = http
@@ -36,7 +37,7 @@ build:
 
 run:
 	sleep 4
-	@$(BINDIR)$(EXEC)
+	@$(BINDIR)$(EXEC) -config=$(CONFIG)
 
 run-docker:
 	docker-compose up&

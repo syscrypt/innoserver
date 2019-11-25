@@ -12,8 +12,9 @@ const (
 	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
 	dqlGetPostByTitle   = `SELECT * FROM posts WHERE title = ?`
 	persistPost         = `INSERT INTO posts
-						   (title, user_id, path, createdAt)
-						   VALUES (?, ?, ?, ?)`
+						   (title, user_id, path, parent_uid,
+							method, type, unique_id)
+						   VALUES (?, ?, ?, ?, ?, ?, ?)`
 )
 
 type postRepository struct {
@@ -58,6 +59,7 @@ func (s *postRepository) GetByTitle(ctx context.Context, title string) (*model.P
 }
 
 func (c *postRepository) Persist(ctx context.Context, post *model.Post) error {
-	_, err := c.persist.ExecContext(ctx, post.Title, post.UserID, post.Path, post.CreatedAt)
+	_, err := c.persist.ExecContext(ctx, post.Title, post.UserID, post.Path,
+		post.ParentUID, post.Method, post.Type, post.UniqueID)
 	return err
 }
