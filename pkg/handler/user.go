@@ -25,7 +25,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	response.Token, err = token.SignedString(jwtKey)
+	response.Token, err = token.SignedString(s.config.JwtSecret)
 	if err != nil {
 		return nil, err
 	}

@@ -12,9 +12,6 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// TODO load from config
-var jwtKey = []byte("secret")
-
 type userRepository interface {
 	GetByUsername(ctx context.Context, name string) (*model.User, error)
 	Persist(ctx context.Context, user *model.User) error
@@ -31,6 +28,7 @@ type Handler struct {
 	postRepo postRepository
 
 	swaggerSpecs []byte
+	config       *model.Config
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -44,6 +42,9 @@ func NewHandler(injections ...interface{}) *Handler {
 		case postRepository:
 			logrus.Println("injected post repository")
 			handler.postRepo = v
+		case *model.Config:
+			logrus.Println("injected config struct")
+			handler.config = v
 		}
 	}
 
