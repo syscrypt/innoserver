@@ -10,10 +10,21 @@
 //     Version: 0.0.1
 //
 //     Consumes:
-//     - application/json
+//       - application/json
+//       - multipart/form-data
+//       - image/png
+//
+//     Security:
+//       - api_key:
+//
+//     SecurityDefinitions:
+//       api_key:
+//         type: apiKey
+//         in: header
+//         name: X-Auth-Token
 //
 //     Produces:
-//     - application/json
+//      - application/json
 //
 // swagger:meta
 package innoserver

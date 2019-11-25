@@ -1,6 +1,7 @@
 package model
 
 import (
+	"os"
 	"time"
 )
 
@@ -24,4 +25,18 @@ type PostBodyParams struct {
 	// required: true
 	// in: body
 	Post *Post `json:"post"`
+}
+
+// A post file request mmdel
+//
+// swagger:parameters uploadPostFile
+type PostFileBodyParams struct {
+	// in: formData
+	// swagger:file
+	// name: file
+	File *os.File `json:"file"`
+
+	// name: fileType
+	// in: formData
+	Type string `json:"fileType"`
 }
