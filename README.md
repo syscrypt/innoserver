@@ -13,7 +13,7 @@ To build and run the full system, you will need the following software:
 * A running `docker` engine
 * `docker-compose`
 * `go toolchain`
-* `swagger`
+* `swagger` https://github.com/go-swagger/go-swagger/releases/tag/latest
 * A `mysql` <b>client</b> software
 
 ### IMPORTANT!
