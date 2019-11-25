@@ -45,7 +45,7 @@ func (s *Handler) UploadPostFile(w http.ResponseWriter, r *http.Request) {
 	if fileType == "image" {
 		maxSize = 10 << 20
 	} else if fileType == "video" {
-		maxSize = 10 << 40
+		maxSize = 10 << 24
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		return
