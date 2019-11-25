@@ -53,6 +53,7 @@ func NewHandler(injections ...interface{}) *Handler {
 
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
+	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
 
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
@@ -91,7 +92,10 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 					logrus.Errorln(errStr)
 					return nil, errors.New(errStr)
 				}
-				return jwtKey, nil
+				if config, ok := r.Context().Value("config").(*model.Config); ok {
+					return config.JwtSecret, nil
+				}
+				return nil, nil
 			})
 			if err != nil {
 				logrus.Errorln("parsing incoming jw-token failed:", err.Error())

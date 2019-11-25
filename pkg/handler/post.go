@@ -55,9 +55,9 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if post.Type == model.PostTypeImage {
-		maxSize = 10 << 20
+		maxSize = s.config.MaxImageSize
 	} else if post.Type == model.PostTypeVideo {
-		maxSize = 10 << 24
+		maxSize = s.config.MaxVideoSize
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 		return

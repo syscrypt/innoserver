@@ -29,7 +29,6 @@ func main() {
 	connectionStr := config.DatabaseUser + ":" + config.DatabasePassword + "@tcp(" +
 		config.DatabaseAddress + ":" + config.DatabasePort + ")/" + config.Database +
 		"?parseTime=true"
-	logrus.Print(connectionStr)
 	db, err := sqlx.Open("mysql", connectionStr)
 	if err != nil {
 		logrus.Fatalln(err)

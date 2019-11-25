@@ -9,4 +9,6 @@ type Config struct {
 	DatabasePassword string `json:"database_password"`
 	DatabaseAddress  string `json:"database_address"`
 	DatabasePort     string `json:"database_port"`
+	MaxImageSize     int64  `json:"max_image_size"`
+	MaxVideoSize     int64  `json:"max_video_size"`
 }

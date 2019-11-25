@@ -107,7 +107,6 @@ func (s *Handler) GetCurrentUser(r *http.Request) (*model.User, error) {
 		if username == "" {
 			return nil, errors.New("no username provided")
 		}
-
 		return s.userRepo.GetByUsername(r.Context(), username)
 	}
 
