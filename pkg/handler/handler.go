@@ -20,8 +20,15 @@ type userRepository interface {
 	Persist(ctx context.Context, user *model.User) error
 }
 
+type postRepository interface {
+	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
+	GetByTitle(ctx context.Context, title string) (*model.Post, error)
+	Persist(ctx context.Context, post *model.Post) error
+}
+
 type Handler struct {
 	userRepo userRepository
+	postRepo postRepository
 
 	swaggerSpecs []byte
 }
@@ -34,6 +41,9 @@ func NewHandler(injections ...interface{}) *Handler {
 		case userRepository:
 			logrus.Println("injectded user repository")
 			handler.userRepo = v
+		case postRepository:
+			logrus.Println("injected post repository")
+			handler.postRepo = v
 		}
 	}
 
@@ -49,7 +59,6 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
-	postRouter.Path("/uploadpostfile").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPostFile)
 	postRouter.Use(authenticationMiddleware)
 
 	router.Use(corsMiddleware)

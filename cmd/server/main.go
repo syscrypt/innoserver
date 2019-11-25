@@ -24,6 +24,10 @@ func main() {
 	if err != nil {
 		logrus.Errorln("error creating the user repository: ", err)
 	}
+	postRepository, err := repository.NewPostRepository(db)
+	if err != nil {
+		logrus.Errorln("error creating the user repository: ", err)
+	}
 
 	// TODO load adress and port from config
 	srv := &http.Server{
@@ -32,6 +36,7 @@ func main() {
 		WriteTimeout: 1 * time.Minute,
 		Handler: handler.NewHandler(
 			userRepository,
+			postRepository,
 		),
 	}
 

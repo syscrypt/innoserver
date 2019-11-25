@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	_ "gitlab.com/innoserver/pkg/model"
+	"gitlab.com/innoserver/pkg/model"
 )
 
 // Uploads a file through http MultipartForm
@@ -21,16 +21,16 @@ import (
 // @param file:    the multiparts file key which is the name of the uploaded file
 //
 // @param fType:   determine if filetype is wether image or video
-func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType string) error {
+func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType int) (string, error) {
 	var outDir string
 	parseError := r.ParseMultipartForm(maxSize)
 	if parseError != nil {
-		return parseError
+		return "", parseError
 	}
 
 	upFile, handler, err := r.FormFile(file)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer upFile.Close()
 	hash := sha256.New()
@@ -38,7 +38,7 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	contentType := handler.Header.Get("Content-Type")
 	extension := "." + contentType[strings.LastIndex(contentType, "/")+1:]
 
-	if fType == "image" {
+	if fType == model.PostTypeImage {
 		outDir = "./assets/images/"
 	} else {
 		outDir = "./assets/videos/"
@@ -51,10 +51,10 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	outFile := outDir + sha[:len(sha)-1] + extension
 	f, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer f.Close()
 	io.Copy(f, upFile)
 
-	return nil
+	return outFile, nil
 }
