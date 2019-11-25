@@ -6,5 +6,7 @@
   "database_user":"ip",
   "database_password":"password",
   "database_address":"127.0.0.1",
-  "database_port":"3306"
+  "database_port":"3306",
+  "max_image_size":"10485760",
+  "max_video_size":"167772160"
 }
