@@ -45,9 +45,9 @@ func main() {
 		logrus.Errorln("error creating the user repository: ", err)
 	}
 
-	// TODO load adress and port from config
+	srvStr := config.ServerAddress + ":" + config.ServerPort
 	srv := &http.Server{
-		Addr:         "0.0.0.0:5000",
+		Addr:         srvStr,
 		ReadTimeout:  1 * time.Minute,
 		WriteTimeout: 1 * time.Minute,
 		Handler: handler.NewHandler(
