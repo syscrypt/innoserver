@@ -25,7 +25,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	response.Token, err = token.SignedString(s.config.JwtSecret)
+	response.Token, err = token.SignedString([]byte(s.config.JwtSecret))
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +62,8 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		ret, _ := json.Marshal(token)
 		w.Write(ret)
 		return
+	} else {
+		logrus.Errorln(err.Error())
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)

@@ -93,7 +93,7 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 					return nil, errors.New(errStr)
 				}
 				if config, ok := r.Context().Value("config").(*model.Config); ok {
-					return config.JwtSecret, nil
+					return []byte(config.JwtSecret), nil
 				}
 				return nil, nil
 			})
