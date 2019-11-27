@@ -45,6 +45,16 @@ func main() {
 		logrus.Errorln("error creating the user repository: ", err)
 	}
 
+	defer func() {
+		logrus.Println("closing database statements")
+		if err = userRepository.Close(); err != nil {
+			logrus.Errorln("user repository:", err.Error())
+		}
+		if err = postRepository.Close(); err != nil {
+			logrus.Errorln("post repository:", err.Error())
+		}
+	}()
+
 	srvStr := config.ServerAddress + ":" + config.ServerPort
 	srv := &http.Server{
 		Addr:         srvStr,

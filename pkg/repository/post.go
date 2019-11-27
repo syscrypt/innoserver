@@ -46,6 +46,20 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	}, err
 }
 
+func (s *postRepository) Close() error {
+	var errorOccured error
+	if err := s.persist.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.selectByUserID.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.getByTitle.Close(); err != nil {
+		errorOccured = err
+	}
+	return errorOccured
+}
+
 func (s *postRepository) SelectByUserID(ctx context.Context, id int) ([]*model.Post, error) {
 	posts := []*model.Post{}
 	err := s.selectByUserID.SelectContext(ctx, posts, id)
