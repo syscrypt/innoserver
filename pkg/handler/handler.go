@@ -15,6 +15,7 @@ import (
 type userRepository interface {
 	GetByUsername(ctx context.Context, name string) (*model.User, error)
 	Persist(ctx context.Context, user *model.User) error
+	GetByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
 type postRepository interface {

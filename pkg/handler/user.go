@@ -29,6 +29,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 	if err != nil {
 		return nil, err
 	}
+	response.Name = user.Name
 
 	return response, nil
 }
@@ -40,6 +41,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 // responses:
 //     200: tokenResponse
 //     400: description: bad request
+//     401: description: wrong user credentials
 //     500: description: server internal error
 func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	logrus.Info("login attempt made")
@@ -51,13 +53,17 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = s.userRepo.GetByUsername(r.Context(), creds.Name); err != nil {
+	if user, err := s.userRepo.GetByEmail(r.Context(), creds.Email); err != nil ||
+		user.Password != creds.Password {
 		logrus.Errorln(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
+	} else {
+		creds = user
 	}
 
 	if token, err := s.generateToken(creds); err == nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		ret, _ := json.Marshal(token)
 		w.Write(ret)
@@ -95,6 +101,7 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if token, err := s.generateToken(creds); err == nil {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		ret, _ := json.Marshal(token)
 		w.Write(ret)

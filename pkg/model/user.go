@@ -35,5 +35,6 @@ type Claims struct {
 //
 // swagger:response tokenResponse
 type TokenResponse struct {
+	Name  string `json:"name"`
 	Token string `json:"token"`
 }
