@@ -88,7 +88,7 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	creds := &model.User{}
 	err := json.NewDecoder(r.Body).Decode(creds)
 	if err != nil {
-		logrus.Errorln("register: error decoding json body", err)
+		logrus.Error("register: error decoding json body", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
