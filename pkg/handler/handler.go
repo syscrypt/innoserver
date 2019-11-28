@@ -76,8 +76,7 @@ func corsMiddleware(h http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		logrus.Println(r.Header.Get("API_KEY"))
-		if r.Header.Get("API_KEY") != config.ApiKey {
+		if r.Header.Get("API_KEY") != config.ApiKey && config.ApiKey != "" {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
