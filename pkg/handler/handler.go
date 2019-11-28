@@ -51,7 +51,8 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
-	router.Path("/swagger").Methods("GET", "OPTIONS").HandlerFunc(s.Swagger)
+	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
+	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(s.Swagger)
 
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
@@ -62,6 +63,9 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 
 	router.Use(corsMiddleware)
+	authRouter.Use(keyMiddleware)
+	postRouter.Use(keyMiddleware)
+
 	router.ServeHTTP(w, r)
 }
 
@@ -74,6 +78,17 @@ func corsMiddleware(h http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", config.AccessControlAllowHeaders)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
+func keyMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config, _ := r.Context().Value("config").(*model.Config)
+		if r.Header.Get("API_KEY") != config.ApiKey && config.ApiKey != "" {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		h.ServeHTTP(w, r)

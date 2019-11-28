@@ -12,6 +12,7 @@
   "access_control_allow_methods":"POST, GET, OPTIONS",
   "access_control_allow_headers":"*",
   "swagger_file":"./swagger/swagger.json",
+  "api_key":"76043d9056a2f21ac5aa329883b1968be2b5088d7b443b89f6e439a9667fb558",
   "max_image_size":10485760,
   "max_video_size":167772160
 }
