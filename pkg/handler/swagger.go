@@ -17,6 +17,7 @@ func (s *Handler) Swagger(w http.ResponseWriter, r *http.Request) {
 	if config, ok := r.Context().Value("config").(*model.Config); ok {
 		if swaggerSpecs, err := ioutil.ReadFile(config.Swaggerfile); err == nil {
 			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
 			w.Write(swaggerSpecs)
 			return
 		}
