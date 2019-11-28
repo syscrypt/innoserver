@@ -12,5 +12,6 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/sirupsen/logrus v1.4.2
+	golang.org/x/crypto v0.0.0-20190617133340-57b3e21c3d56
 	google.golang.org/appengine v1.6.5 // indirect
 )

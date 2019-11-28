@@ -10,7 +10,16 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
+	"golang.org/x/crypto/bcrypt"
 )
+
+func hashAndSalt(passwd []byte) string {
+	hash, err := bcrypt.GenerateFromPassword(passwd, bcrypt.DefaultCost)
+	if err != nil {
+		logrus.Println(err)
+	}
+	return string(hash)
+}
 
 func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) {
 	response := &model.TokenResponse{}
@@ -54,8 +63,7 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user, err := s.userRepo.GetByEmail(r.Context(), creds.Email); err != nil ||
-		user.Password != creds.Password {
-		logrus.Errorln(err)
+		bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)) != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	} else {
@@ -93,6 +101,7 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	creds.Password = hashAndSalt([]byte(creds.Password))
 	err = s.userRepo.Persist(r.Context(), creds)
 	if err != nil {
 		logrus.Errorln("register: could not persist user")
