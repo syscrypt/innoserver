@@ -14,6 +14,7 @@ type Config struct {
 	AccessControlAllowMethods     string `json:"access_control_allow_methods"`
 	AccessControlAllowHeaders     string `json:"access_control_allow_headers"`
 	Swaggerfile                   string `json:"swagger_file"`
+	ApiKey                        string `json:"api_key"`
 	MaxImageSize                  int64  `json:"max_image_size"`
 	MaxVideoSize                  int64  `json:"max_video_size"`
 }

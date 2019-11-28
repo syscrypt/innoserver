@@ -15,13 +15,18 @@
 //       - image/png
 //
 //     Security:
+//       - api_token:
 //       - api_key:
 //
 //     SecurityDefinitions:
-//       api_key:
+//       api_token:
 //         type: apiKey
 //         in: header
 //         name: X-Auth-Token
+//       api_key:
+//         type: apiKey
+//         in: header
+//         name: API_KEY
 //
 //     Produces:
 //      - application/json
