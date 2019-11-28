@@ -11,6 +11,7 @@
   "access_control_allow_credentials":"true",
   "access_control_allow_methods":"POST, GET, OPTIONS",
   "access_control_allow_headers":"*",
+  "swagger_file":"./swagger/swagger.json",
   "max_image_size":10485760,
   "max_video_size":167772160
 }

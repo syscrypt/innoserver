@@ -1,23 +1,25 @@
 package handler
 
 import (
+	"io/ioutil"
 	"net/http"
-)
 
-// Response for login routine
-//
-// swagger:response swaggerResponse
-type swaggerResponse struct {
-	Token string
-}
+	"gitlab.com/innoserver/pkg/model"
+)
 
 // Swagger swagger:route GET /swagger swagger
 //
 // Returns the swagger specifications
 //
 // responses:
-//     200: swaggerResponse
+//     200: description: Swagger specifications
 func (s *Handler) Swagger(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write(s.swaggerSpecs)
+	if config, ok := r.Context().Value("config").(*model.Config); ok {
+		if swaggerSpecs, err := ioutil.ReadFile(config.Swaggerfile); err == nil {
+			w.WriteHeader(http.StatusOK)
+			w.Write(swaggerSpecs)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusInternalServerError)
 }
