@@ -41,7 +41,7 @@ run:
 	@$(BINDIR)$(EXEC) -config=$(CONFIG)
 
 run-docker:
-	docker-compose up&
+	docker-compose up -d
 
 init-database:
 	mysql -h 127.0.0.1 -P $(DBPORT) --protocol=tcp -u $(DBUSR) --password=$(DBPW) -D $(DB) < $(SCHEMA)
