@@ -28,8 +28,7 @@ type Handler struct {
 	userRepo userRepository
 	postRepo postRepository
 
-	swaggerSpecs []byte
-	config       *model.Config
+	config *model.Config
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -38,13 +37,10 @@ func NewHandler(injections ...interface{}) *Handler {
 	for _, i := range injections {
 		switch v := i.(type) {
 		case userRepository:
-			logrus.Println("injectded user repository")
 			handler.userRepo = v
 		case postRepository:
-			logrus.Println("injected post repository")
 			handler.postRepo = v
 		case *model.Config:
-			logrus.Println("injected config struct")
 			handler.config = v
 		}
 	}
@@ -55,6 +51,7 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
+	router.Path("/swagger").Methods("GET", "OPTIONS").HandlerFunc(s.Swagger)
 
 	authRouter := router.PathPrefix("/auth").Subrouter()
 	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
