@@ -7,6 +7,10 @@
   "database_password":"password",
   "database_address":"127.0.0.1",
   "database_port":"3306",
+  "access_control_allow_origin":"*",
+  "access_control_allow_credentials":"true",
+  "access_control_allow_methods":"POST, GET, OPTIONS",
+  "access_control_allow_headers":"*",
   "max_image_size":10485760,
   "max_video_size":167772160
 }

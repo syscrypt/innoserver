@@ -70,10 +70,11 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func corsMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
+		config, _ := r.Context().Value("config").(*model.Config)
+		w.Header().Set("Access-Control-Allow-Origin", config.AccessControlAllowOrigin)
+		w.Header().Set("Access-Control-Allow-Credentials", config.AccessControlAllowCredentials)
+		w.Header().Set("Access-Control-Allow-Methods", config.AccessControlAllowMethods)
+		w.Header().Set("Access-Control-Allow-Headers", config.AccessControlAllowHeaders)
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
