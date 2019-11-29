@@ -59,6 +59,12 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
 	postRouter.Use(authenticationMiddleware)
 
+	assetRouter := router.PathPrefix("/assets").Subrouter()
+	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
+		http.FileServer(http.Dir("assets/images/"))))
+	assetRouter.PathPrefix("/videos").Handler(http.StripPrefix("/assets/videos",
+		http.FileServer(http.Dir("assets/videos/"))))
+
 	router.Use(corsMiddleware)
 	authRouter.Use(keyMiddleware)
 	postRouter.Use(keyMiddleware)
