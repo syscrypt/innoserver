@@ -19,6 +19,7 @@ type postRepository interface {
 	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
 	GetByTitle(ctx context.Context, title string) (*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
+	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 }
 
 type Handler struct {
@@ -56,7 +57,8 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(s.Register)
 
 	postRouter := router.PathPrefix("/post").Subrouter()
-	postRouter.Path("/uploadpost").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
+	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
+	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(s.GetPost)
 	postRouter.Use(authenticationMiddleware)
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()

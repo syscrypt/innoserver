@@ -49,6 +49,7 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	sha := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
 	outFile := outDir + sha[:len(sha)-1] + extension
+	path := sha[:len(sha)-1] + extension
 	f, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return "", err
@@ -56,5 +57,5 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	defer f.Close()
 	io.Copy(f, upFile)
 
-	return outFile, nil
+	return path, nil
 }

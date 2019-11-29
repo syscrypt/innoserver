@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -9,7 +10,7 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// UploadPost swagger:route POST /post/uploadpost uploadPost
+// UploadPost swagger:route POST /post/upload post uploadPost
 //
 //   <p>Takes, processes and persist posts data
 //   A post file request model.
@@ -78,4 +79,36 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// GetPost swagger:route GET /post/get post getPost
+//
+// Fetch post over unique id
+//
+// responses:
+//     200: description: postBody
+//     400: description: bad request
+//     500: description: server internal error
+func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
+	uid := r.URL.Query().Get("uid")
+	if uid == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	post, err := s.postRepo.GetByUid(r.Context(), uid)
+	if err != nil {
+		logrus.Errorln("getpost:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if ret, err := json.Marshal(post); err == nil {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(ret)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
 }

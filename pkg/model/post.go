@@ -23,7 +23,7 @@ type Post struct {
 	UniqueID  string    `json:"unique_id" db:"unique_id"`
 	Title     string    `json:"title"`
 	UserID    int       `json:"-" db:"user_id"`
-	Path      string    `json:"-"`
+	Path      string    `json:"path"`
 	CreatedAt time.Time `json:"-" db:"created_at"`
 	ParentUID string    `json:"parent_uid" db:"parent_uid"`
 	Method    int       `json:"method"`
@@ -32,10 +32,16 @@ type Post struct {
 
 // A post request model
 //
-// swagger:parameters uploadPost2
+// swagger:parameters getPost2
 type PostBodyParams struct {
 	// in: body
 	Post *Post `json:"post"`
+}
+
+// swagger:parameters getPost
+type GetPostParams struct {
+	// in: query
+	UniqueID string `json:"uid"`
 }
 
 // swagger:parameters uploadPost
