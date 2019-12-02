@@ -44,6 +44,12 @@ type GetPostParams struct {
 	UniqueID string `json:"uid"`
 }
 
+// swagger:parameters getChildren
+type GetChildrenParams struct {
+	// in: query
+	ParentUid string `json:"parent_uid"`
+}
+
 // swagger:parameters uploadPost
 type PostFileBodyParams struct {
 	// in: formData

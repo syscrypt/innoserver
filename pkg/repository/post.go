@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
-	dqlGetPostByTitle   = `SELECT * FROM posts WHERE title = ?`
-	dqlGetPostByUid     = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
-	persistPost         = `INSERT INTO posts
+	dqlAllPostsByUserID   = `SELECT * FROM posts WHERE user_id = ?`
+	dqlGetPostByTitle     = `SELECT * FROM posts WHERE title = ?`
+	dqlGetPostByUid       = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
+	selectChildPostsByUid = `SELECT * FROM posts WHERE parent_uid = ?`
+	persistPost           = `INSERT INTO posts
 						   (title, user_id, path, parent_uid,
 							method, type, unique_id)
 						   VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -23,6 +24,7 @@ type postRepository struct {
 	selectByUserID *sqlx.Stmt
 	getByTitle     *sqlx.Stmt
 	getByUID       *sqlx.Stmt
+	selectByParent *sqlx.Stmt
 }
 
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
@@ -44,12 +46,17 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxSelectByParent, err := db.PreparexContext(ctx, selectChildPostsByUid)
+	if err != nil {
+		return nil, err
+	}
 
 	return &postRepository{
 		persist:        ctxPersistPost,
 		selectByUserID: ctxSelectByUserID,
 		getByTitle:     ctxGetByTitle,
 		getByUID:       ctxGetByUID,
+		selectByParent: ctxSelectByParent,
 	}, err
 }
 
@@ -65,6 +72,9 @@ func (s *postRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.getByUID.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.selectByParent.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -92,4 +102,10 @@ func (s *postRepository) GetByUid(ctx context.Context, uid string) (*model.Post,
 	post := &model.Post{}
 	err := s.getByUID.GetContext(ctx, post, uid)
 	return post, err
+}
+
+func (s *postRepository) SelectByParentUid(ctx context.Context, uid string) ([]*model.Post, error) {
+	posts := []*model.Post{}
+	err := s.selectByParent.SelectContext(ctx, &posts, uid)
+	return posts, err
 }

@@ -17,6 +17,7 @@ type userRepository interface {
 
 type postRepository interface {
 	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
+	SelectByParentUid(ctx context.Context, uid string) ([]*model.Post, error)
 	GetByTitle(ctx context.Context, title string) (*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
@@ -59,6 +60,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(s.GetPost)
+	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(s.GetChildren)
 	postRouter.Use(authenticationMiddleware)
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()

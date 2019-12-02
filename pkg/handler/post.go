@@ -78,6 +78,8 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logrus.Println("Hier!!!")
+
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -104,6 +106,35 @@ func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ret, err := json.Marshal(post); err == nil {
+		w.Header().Set("content-type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(ret)
+		return
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+// GetChildren swagger:route GET /post/getchildren post getChildren
+//
+// Fetch all subposts of a specific parent post
+// responses:
+//    200: description: successfully returned a list of subposts
+func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) {
+	parent := r.URL.Query().Get("parent_uid")
+	if parent == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	posts, err := s.postRepo.SelectByParentUid(r.Context(), parent)
+	if err != nil {
+		logrus.Errorln("getchildren:", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if ret, err := json.Marshal(posts); err == nil {
 		w.Header().Set("content-type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(ret)
