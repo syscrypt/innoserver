@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
@@ -26,7 +28,7 @@ import (
 //     multipart/form-data
 //
 // responses:
-//     200: description: post was uploaded successfully
+//     200: uidResponse
 //     400: description: bad request
 //     500: description: internal server error
 func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,6 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	user, err := s.GetCurrentUser(r)
 
 	post := &model.Post{}
-	post.UniqueID = r.FormValue("unique_id")
 	post.Title = r.FormValue("title")
 	post.ParentUID = r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
@@ -72,15 +73,44 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	post.Path = path
 	post.UserID = user.ID
 
+	for {
+		uid, _ := uuid.NewRandom()
+		logrus.Println(uid.String())
+
+		var exists bool
+		var err error
+		if exists, err = s.postRepo.UniqueIdExists(r.Context(), uid.String()); err != nil {
+			logrus.Errorln("uploadpost:", err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if !exists {
+			post.UniqueID = uid.String()
+			break
+		}
+
+		time.Sleep(250 * time.Millisecond)
+	}
+
 	if err := s.postRepo.Persist(r.Context(), post); err != nil {
 		logrus.Errorln(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	logrus.Println("Hier!!!")
+	uidResponse := &model.GetPostParams{}
+	uidResponse.UniqueID = post.UniqueID
+	ret, err := json.Marshal(uidResponse)
+	if err != nil {
+		logrus.Errorln(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(ret)
 }
 
 // GetPost swagger:route GET /post/get post getPost

@@ -21,6 +21,7 @@ type postRepository interface {
 	GetByTitle(ctx context.Context, title string) (*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
+	UniqueIdExists(ctx context.Context, uid string) (bool, error)
 }
 
 type Handler struct {
