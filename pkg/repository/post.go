@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 
@@ -108,4 +109,12 @@ func (s *postRepository) SelectByParentUid(ctx context.Context, uid string) ([]*
 	posts := []*model.Post{}
 	err := s.selectByParent.SelectContext(ctx, &posts, uid)
 	return posts, err
+}
+
+func (s *postRepository) UniqueIdExists(ctx context.Context, uid string) (bool, error) {
+	if _, err := s.GetByUid(ctx, uid); err != nil && err != sql.ErrNoRows {
+		return true, err
+	}
+
+	return false, nil
 }

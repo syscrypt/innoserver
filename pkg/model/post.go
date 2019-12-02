@@ -55,8 +55,6 @@ type PostFileBodyParams struct {
 	// in: formData
 	Title string `json:"title"`
 	// in: formData
-	UniqueID string `json:"unique_id"`
-	// in: formData
 	ParentUID string `json:"parent_uid"`
 	// in: formData
 	// enum: 0,1
@@ -68,4 +66,11 @@ type PostFileBodyParams struct {
 	// swagger:file
 	// name: file
 	File *os.File `json:"file"`
+}
+
+// A response containing a unique id
+//
+// swagger:response uidResponse
+type UidResponse struct {
+	UniqueID string `json:"unique_id"`
 }
