@@ -30,6 +30,8 @@ type groupRepository interface {
 	UniqueIdExists(ctx context.Context, uid string) (bool, error)
 	Persist(ctx context.Context, group *model.Group) error
 	AddUserToGroup(ctx context.Context, user *model.User, group *model.Group) error
+	IsUserInGroup(ctx context.Context, user *model.User, group *model.Group) (bool, error)
+	GetUsersInGroup(ctx context.Context, group *model.Group) ([]*model.User, error)
 }
 
 type uniqueID interface {

@@ -73,6 +73,16 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 	if curUser.Email == user.Email {
 		return errors.New("cannot add requesting user to destination group"), http.StatusBadRequest
 	}
+	if curUser.ID == group.AdminID {
+		return errors.New("requesting user is not the group admin"), http.StatusUnauthorized
+	}
+	ok, err := s.groupRepo.IsUserInGroup(r.Context(), user, group)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if !ok {
+		return errors.New("user is already member of group " + group.Title), http.StatusBadRequest
+	}
 	err = s.groupRepo.AddUserToGroup(r.Context(), user, group)
 	if err != nil {
 		return err, http.StatusInternalServerError
