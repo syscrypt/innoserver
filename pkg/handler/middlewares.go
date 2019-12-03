@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -69,9 +70,18 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 
 func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config, ok := r.Context().Value("config").(*model.Config)
 		err, status := f(w, r)
 		if err != nil {
 			logrus.Error(r.URL.String() + ": " + err.Error())
+			if ok && config.RunLevel == "debug" {
+				w.Header().Set("content-type", "application/json")
+				errResp := &model.ErrorResponse{}
+				errResp.Message = r.URL.String() + ": " + err.Error()
+				errStr, _ := json.Marshal(errResp)
+				w.WriteHeader(status)
+				w.Write([]byte(errStr))
+			}
 		}
 		w.WriteHeader(status)
 	})

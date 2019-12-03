@@ -1,6 +1,7 @@
 package model
 
 type Config struct {
+	RunLevel                      string `json:"run_level"`
 	JwtSecret                     string `json:"jwt_secret"`
 	ServerAddress                 string `json:"server_address"`
 	ServerPort                    string `json:"server_port"`

@@ -4,5 +4,5 @@ package model
 //
 // swagger:response errorResponse
 type ErrorResponse struct {
-	Message string `json:"message"`
+	Message string `json:"error_message"`
 }
