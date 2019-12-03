@@ -22,6 +22,7 @@ type postRepository interface {
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 	UniqueIdExists(ctx context.Context, uid string) (bool, error)
+	SelectLatest(ctx context.Context, limit int) ([]*model.Post, error)
 }
 
 type Handler struct {
@@ -60,6 +61,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
+	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
 	postRouter.Use(authenticationMiddleware)
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()

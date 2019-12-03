@@ -11,9 +11,10 @@ import (
 
 const (
 	dqlAllPostsByUserID   = `SELECT * FROM posts WHERE user_id = ?`
+	selectLatestPosts     = `SELECT * FROM posts ORDER BY created_at DESC LIMIT ?`
 	dqlGetPostByTitle     = `SELECT * FROM posts WHERE title = ?`
 	dqlGetPostByUid       = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
-	selectChildPostsByUid = `SELECT * FROM posts WHERE parent_uid = ?`
+	selectChildPostsByUid = `SELECT * FROM posts WHERE parent_uid = ? ORDER BY created_at DESC`
 	persistPost           = `INSERT INTO posts
 						   (title, user_id, path, parent_uid,
 							method, type, unique_id)
@@ -26,6 +27,7 @@ type postRepository struct {
 	getByTitle     *sqlx.Stmt
 	getByUID       *sqlx.Stmt
 	selectByParent *sqlx.Stmt
+	selectLatest   *sqlx.Stmt
 }
 
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
@@ -51,6 +53,10 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxSelectLatest, err := db.PreparexContext(ctx, selectLatestPosts)
+	if err != nil {
+		return nil, err
+	}
 
 	return &postRepository{
 		persist:        ctxPersistPost,
@@ -58,6 +64,7 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 		getByTitle:     ctxGetByTitle,
 		getByUID:       ctxGetByUID,
 		selectByParent: ctxSelectByParent,
+		selectLatest:   ctxSelectLatest,
 	}, err
 }
 
@@ -76,6 +83,9 @@ func (s *postRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.selectByParent.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.selectLatest.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -115,6 +125,11 @@ func (s *postRepository) UniqueIdExists(ctx context.Context, uid string) (bool, 
 	if _, err := s.GetByUid(ctx, uid); err != nil && err != sql.ErrNoRows {
 		return true, err
 	}
-
 	return false, nil
+}
+
+func (s *postRepository) SelectLatest(ctx context.Context, limit int) ([]*model.Post, error) {
+	posts := []*model.Post{}
+	err := s.selectLatest.SelectContext(ctx, &posts, limit)
+	return posts, err
 }

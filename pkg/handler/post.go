@@ -145,3 +145,29 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 	w.Write(ret)
 	return nil, http.StatusOK
 }
+
+// FetchLatestPosts swagger:route GET /post/selectlatest post fetchLatestPosts
+//
+// Fetch all subposts of a specific parent post
+// responses:
+//    200: description: successfully returned a list of first X posts
+//    400: description: Query error
+//    500: description: Internal error
+func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (error, int) {
+	count := r.URL.Query().Get("limit")
+	icount, err := strconv.Atoi(count)
+	if count == "" || err != nil {
+		return errors.New("parameter count missing in request query or wrong type"), http.StatusBadRequest
+	}
+	posts, err := s.postRepo.SelectLatest(r.Context(), icount)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	postsStr, err := json.Marshal(posts)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	w.Header().Set("content-type", "application/json")
+	w.Write(postsStr)
+	return nil, http.StatusOK
+}

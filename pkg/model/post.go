@@ -24,7 +24,7 @@ type Post struct {
 	Title     string    `json:"title"`
 	UserID    int       `json:"-" db:"user_id"`
 	Path      string    `json:"path"`
-	CreatedAt time.Time `json:"-" db:"created_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	ParentUID string    `json:"parent_uid" db:"parent_uid"`
 	Method    int       `json:"method"`
 	Type      int       `json:"type"`
@@ -48,6 +48,12 @@ type GetPostParams struct {
 type GetChildrenParams struct {
 	// in: query
 	ParentUid string `json:"parent_uid"`
+}
+
+// swagger:parameters fetchLatestPosts
+type FetchPostsParams struct {
+	// in: query
+	Limit uint `json:"limit"`
 }
 
 // swagger:parameters uploadPost
