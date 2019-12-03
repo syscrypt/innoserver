@@ -66,3 +66,13 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 		w.WriteHeader(http.StatusUnauthorized)
 	})
 }
+
+func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err, status := f(w, r)
+		if err != nil {
+			logrus.Error(r.URL.String() + ": " + err.Error())
+		}
+		w.WriteHeader(status)
+	})
+}

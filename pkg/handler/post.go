@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -31,7 +32,7 @@ import (
 //     200: uidResponse
 //     400: description: bad request
 //     500: description: internal server error
-func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int) {
 	var maxSize int64
 	var path string
 	var err error
@@ -43,17 +44,12 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	post.ParentUID = r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	post.Type, err = strconv.Atoi(r.FormValue("type"))
-
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		logrus.Errorln(err.Error())
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
-		w.WriteHeader(http.StatusBadRequest)
-		logrus.Errorln("uploadpost: wrong value for type")
-		return
+		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
 
 	if post.Type == model.PostTypeImage {
@@ -61,14 +57,11 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	} else if post.Type == model.PostTypeVideo {
 		maxSize = s.config.MaxVideoSize
 	} else {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
 
 	if path, err = s.UploadFile(r, maxSize, "file", post.Type); err != nil {
-		logrus.Errorln(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err, http.StatusInternalServerError
 	}
 	post.Path = path
 	post.UserID = user.ID
@@ -76,41 +69,32 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 	for {
 		uid, _ := uuid.NewRandom()
 		logrus.Println(uid.String())
-
 		var exists bool
 		var err error
 		if exists, err = s.postRepo.UniqueIdExists(r.Context(), uid.String()); err != nil {
-			logrus.Errorln("uploadpost:", err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
+			return err, http.StatusInternalServerError
 		}
-
 		if !exists {
 			post.UniqueID = uid.String()
 			break
 		}
-
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	if err := s.postRepo.Persist(r.Context(), post); err != nil {
-		logrus.Errorln(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	uidResponse := &model.GetPostParams{}
 	uidResponse.UniqueID = post.UniqueID
 	ret, err := json.Marshal(uidResponse)
 	if err != nil {
-		logrus.Errorln(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err, http.StatusInternalServerError
 	}
 
 	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	w.Write(ret)
+	return nil, http.StatusOK
 }
 
 // GetPost swagger:route GET /post/get post getPost
@@ -121,28 +105,22 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) {
 //     200: description: postBody
 //     400: description: bad request
 //     500: description: server internal error
-func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) (error, int) {
 	uid := r.URL.Query().Get("uid")
 	if uid == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return errors.New("parameter uid missing"), http.StatusBadRequest
 	}
-
 	post, err := s.postRepo.GetByUid(r.Context(), uid)
 	if err != nil {
-		logrus.Errorln("getpost:", err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err, http.StatusInternalServerError
 	}
-
-	if ret, err := json.Marshal(post); err == nil {
-		w.Header().Set("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(ret)
-		return
+	ret, err := json.Marshal(post)
+	if err != nil {
+		return err, http.StatusInternalServerError
 	}
-
-	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("content-type", "application/json")
+	w.Write(ret)
+	return nil, http.StatusOK
 }
 
 // GetChildren swagger:route GET /post/getchildren post getChildren
@@ -150,26 +128,20 @@ func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) {
 // Fetch all subposts of a specific parent post
 // responses:
 //    200: description: successfully returned a list of subposts
-func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) {
+func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, int) {
 	parent := r.URL.Query().Get("parent_uid")
 	if parent == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return errors.New("parameter parent_uid missing in request"), http.StatusBadRequest
 	}
-
 	posts, err := s.postRepo.SelectByParentUid(r.Context(), parent)
 	if err != nil {
-		logrus.Errorln("getchildren:", err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err, http.StatusInternalServerError
 	}
-
-	if ret, err := json.Marshal(posts); err == nil {
-		w.Header().Set("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(ret)
-		return
+	ret, err := json.Marshal(posts)
+	if err != nil {
+		return err, http.StatusInternalServerError
 	}
-
-	w.WriteHeader(http.StatusInternalServerError)
+	w.Header().Set("content-type", "application/json")
+	w.Write(ret)
+	return nil, http.StatusOK
 }

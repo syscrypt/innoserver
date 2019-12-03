@@ -33,7 +33,6 @@ type Handler struct {
 
 func NewHandler(injections ...interface{}) *Handler {
 	handler := &Handler{}
-
 	for _, i := range injections {
 		switch v := i.(type) {
 		case userRepository:
@@ -44,7 +43,6 @@ func NewHandler(injections ...interface{}) *Handler {
 			handler.config = v
 		}
 	}
-
 	return handler
 }
 
@@ -52,16 +50,16 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
-	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(s.Swagger)
+	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
 	authRouter := router.PathPrefix("/auth").Subrouter()
-	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(s.Login)
-	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(s.Register)
+	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Login))
+	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Register))
 
 	postRouter := router.PathPrefix("/post").Subrouter()
-	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(s.UploadPost)
-	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(s.GetPost)
-	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(s.GetChildren)
+	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
+	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
+	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Use(authenticationMiddleware)
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
