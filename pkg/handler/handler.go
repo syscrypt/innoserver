@@ -29,6 +29,7 @@ type groupRepository interface {
 	GetByUid(ctx context.Context, uid string) (*model.Group, error)
 	UniqueIdExists(ctx context.Context, uid string) (bool, error)
 	Persist(ctx context.Context, group *model.Group) error
+	AddUserToGroup(ctx context.Context, user *model.User, group *model.Group) error
 }
 
 type uniqueID interface {
@@ -79,6 +80,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
 	groupRouter.Path("/creategroup").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	groupRouter.Path("/addusertogroup").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
