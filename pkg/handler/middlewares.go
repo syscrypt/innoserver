@@ -83,6 +83,8 @@ func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.
 				w.Write([]byte(errStr))
 			}
 		}
-		w.WriteHeader(status)
+		if status != http.StatusOK {
+			w.WriteHeader(status)
+		}
 	})
 }

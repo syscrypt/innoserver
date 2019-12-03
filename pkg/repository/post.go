@@ -10,15 +10,16 @@ import (
 )
 
 const (
-	dqlAllPostsByUserID   = `SELECT * FROM posts WHERE user_id = ?`
-	selectLatestPosts     = `SELECT * FROM posts ORDER BY created_at DESC LIMIT ?`
+	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
+	selectLatestPosts   = `SELECT * FROM posts WHERE parent_uid = ""
+						   ORDER BY created_at DESC LIMIT ?`
 	dqlGetPostByTitle     = `SELECT * FROM posts WHERE title = ?`
 	dqlGetPostByUid       = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
 	selectChildPostsByUid = `SELECT * FROM posts WHERE parent_uid = ? ORDER BY created_at DESC`
 	persistPost           = `INSERT INTO posts
 						   (title, user_id, path, parent_uid,
-							method, type, unique_id)
-						   VALUES (?, ?, ?, ?, ?, ?, ?)`
+							method, type, unique_id, group_id)
+							VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
 type postRepository struct {
@@ -105,7 +106,7 @@ func (s *postRepository) GetByTitle(ctx context.Context, title string) (*model.P
 
 func (c *postRepository) Persist(ctx context.Context, post *model.Post) error {
 	_, err := c.persist.ExecContext(ctx, post.Title, post.UserID, post.Path,
-		post.ParentUID, post.Method, post.Type, post.UniqueID)
+		post.ParentUID, post.Method, post.Type, post.UniqueID, post.GroupID)
 	return err
 }
 

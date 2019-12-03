@@ -5,10 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
 )
@@ -66,28 +62,16 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	post.Path = path
 	post.UserID = user.ID
 
-	for {
-		uid, _ := uuid.NewRandom()
-		logrus.Println(uid.String())
-		var exists bool
-		var err error
-		if exists, err = s.postRepo.UniqueIdExists(r.Context(), uid.String()); err != nil {
-			return err, http.StatusInternalServerError
-		}
-		if !exists {
-			post.UniqueID = uid.String()
-			break
-		}
-		time.Sleep(100 * time.Millisecond)
+	uid, err := generateUid(s.postRepo, r)
+	if err != nil || uid == "" {
+		return errors.New("error generating uid. " + err.Error()), http.StatusInternalServerError
 	}
+	post.UniqueID = uid
 
 	if err := s.postRepo.Persist(r.Context(), post); err != nil {
 		return err, http.StatusInternalServerError
 	}
-
-	uidResponse := &model.GetPostParams{}
-	uidResponse.UniqueID = post.UniqueID
-	ret, err := json.Marshal(uidResponse)
+	ret, err := json.Marshal(&model.UidResponse{UniqueID: post.UniqueID})
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

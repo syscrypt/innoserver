@@ -25,9 +25,20 @@ type postRepository interface {
 	SelectLatest(ctx context.Context, limit int) ([]*model.Post, error)
 }
 
+type groupRepository interface {
+	GetByUid(ctx context.Context, uid string) (*model.Group, error)
+	UniqueIdExists(ctx context.Context, uid string) (bool, error)
+	Persist(ctx context.Context, group *model.Group) error
+}
+
+type uniqueID interface {
+	UniqueIdExists(ctx context.Context, uid string) (bool, error)
+}
+
 type Handler struct {
-	userRepo userRepository
-	postRepo postRepository
+	userRepo  userRepository
+	postRepo  postRepository
+	groupRepo groupRepository
 
 	config *model.Config
 }
@@ -40,6 +51,8 @@ func NewHandler(injections ...interface{}) *Handler {
 			handler.userRepo = v
 		case postRepository:
 			handler.postRepo = v
+		case groupRepository:
+			handler.groupRepo = v
 		case *model.Config:
 			handler.config = v
 		}
@@ -64,6 +77,9 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
 	postRouter.Use(authenticationMiddleware)
 
+	groupRouter := router.PathPrefix("/group").Subrouter()
+	groupRouter.Path("/creategroup").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
 		http.FileServer(http.Dir("assets/images/"))))
@@ -73,6 +89,9 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router.Use(corsMiddleware)
 	authRouter.Use(keyMiddleware)
 	postRouter.Use(keyMiddleware)
+	groupRouter.Use(keyMiddleware)
+	groupRouter.Use(authenticationMiddleware)
+	postRouter.Use(authenticationMiddleware)
 
 	router.ServeHTTP(w, r)
 }

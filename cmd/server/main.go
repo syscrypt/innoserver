@@ -42,7 +42,11 @@ func main() {
 	}
 	postRepository, err := repository.NewPostRepository(db)
 	if err != nil {
-		logrus.Errorln("error creating the user repository: ", err)
+		logrus.Errorln("error creating the post repository: ", err)
+	}
+	groupRepository, err := repository.NewGroupRepository(db)
+	if err != nil {
+		logrus.Errorln("error creating the group repository:", err)
 	}
 
 	defer func() {
@@ -52,6 +56,9 @@ func main() {
 		}
 		if err = postRepository.Close(); err != nil {
 			logrus.Errorln("post repository:", err.Error())
+		}
+		if err = groupRepository.Close(); err != nil {
+			logrus.Errorln("group repository:", err.Error())
 		}
 	}()
 
@@ -63,6 +70,7 @@ func main() {
 		Handler: handler.NewHandler(
 			userRepository,
 			postRepository,
+			groupRepository,
 			config,
 		),
 	}

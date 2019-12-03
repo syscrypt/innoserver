@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"os"
 	"time"
 )
@@ -19,15 +20,16 @@ const (
 //
 // swagger:model
 type Post struct {
-	ID        int       `json:"-"`
-	UniqueID  string    `json:"unique_id" db:"unique_id"`
-	Title     string    `json:"title"`
-	UserID    int       `json:"-" db:"user_id"`
-	Path      string    `json:"path"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	ParentUID string    `json:"parent_uid" db:"parent_uid"`
-	Method    int       `json:"method"`
-	Type      int       `json:"type"`
+	ID        int           `json:"-"`
+	UniqueID  string        `json:"unique_id" db:"unique_id"`
+	Title     string        `json:"title"`
+	UserID    int           `json:"-" db:"user_id"`
+	Path      string        `json:"path"`
+	CreatedAt time.Time     `json:"created_at" db:"created_at"`
+	ParentUID string        `json:"parent_uid" db:"parent_uid"`
+	Method    int           `json:"method"`
+	Type      int           `json:"type"`
+	GroupID   sql.NullInt32 `json:"group_id" db:"group_id"`
 }
 
 // A post request model
