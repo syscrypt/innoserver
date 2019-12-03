@@ -69,3 +69,7 @@ func generateUid(repo uniqueID, r *http.Request) (string, error) {
 	}
 	return "", errors.New("unknown error while generating uid")
 }
+
+func SetJsonHeader(w http.ResponseWriter) {
+	w.Header().Set("content-type", "application/json")
+}

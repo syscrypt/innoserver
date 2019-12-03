@@ -40,6 +40,14 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	post.ParentUID = r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	post.Type, err = strconv.Atoi(r.FormValue("type"))
+	g_uid := r.FormValue("group_uid")
+	if g_uid != "" {
+		if group, err := s.groupRepo.GetByUid(r.Context(), g_uid); err == nil {
+			post.GroupID.Int32 = int32(group.ID)
+			post.GroupID.Valid = true
+		}
+	}
+
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -76,7 +84,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 		return err, http.StatusInternalServerError
 	}
 
-	w.Header().Set("content-type", "application/json")
+	SetJsonHeader(w)
 	w.Write(ret)
 	return nil, http.StatusOK
 }
@@ -125,7 +133,7 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	w.Header().Set("content-type", "application/json")
+	SetJsonHeader(w)
 	w.Write(ret)
 	return nil, http.StatusOK
 }
@@ -139,11 +147,29 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 //    500: description: Internal error
 func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (error, int) {
 	count := r.URL.Query().Get("limit")
+	group_uid := r.URL.Query().Get("group_uid")
 	icount, err := strconv.Atoi(count)
+	var group *model.Group
 	if count == "" || err != nil {
 		return errors.New("parameter count missing in request query or wrong type"), http.StatusBadRequest
 	}
-	posts, err := s.postRepo.SelectLatest(r.Context(), icount)
+	if group_uid == "" {
+		group = nil
+	} else {
+		group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
+		if err != nil {
+			return err, http.StatusBadRequest
+		}
+	}
+	var posts []*model.Post
+	if group == nil {
+		posts, err = s.postRepo.SelectLatest(r.Context(), uint64(icount))
+	} else {
+		posts, err = s.postRepo.SelectLatestOfGroup(r.Context(), group, uint64(icount))
+	}
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -151,7 +177,7 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	w.Header().Set("content-type", "application/json")
+	SetJsonHeader(w)
 	w.Write(postsStr)
 	return nil, http.StatusOK
 }

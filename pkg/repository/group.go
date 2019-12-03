@@ -15,7 +15,7 @@ const (
 	dqlGetGroupByUid  = `SELECT * FROM groups WHERE unique_id = ? LIMIT 1`
 	sqlAddUserToGroup = `INSERT INTO group_user (group_id, user_id)
 						 VALUES (?, ?)`
-	sqlGetUsersInGroup = `SELECT u.* FROM users u WHERE
+	sqlGetUsersInGroup = `SELECT u.name, u.email, u.imei FROM users u WHERE
 						  u.id IN (SELECT gu.user_id FROM group_user gu WHERE
 						  gu.group_id = ?)`
 )

@@ -54,8 +54,11 @@ type GetChildrenParams struct {
 
 // swagger:parameters fetchLatestPosts
 type FetchPostsParams struct {
+	// required: true
 	// in: query
 	Limit uint `json:"limit"`
+
+	GroupUid string `json:"group_uid"`
 }
 
 // swagger:parameters uploadPost
@@ -64,6 +67,8 @@ type PostFileBodyParams struct {
 	Title string `json:"title"`
 	// in: formData
 	ParentUID string `json:"parent_uid"`
+	// in: formData
+	GroupUid string `json:"group_uid"`
 	// in: formData
 	// enum: 0,1
 	Method int `json:"method"`

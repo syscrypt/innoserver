@@ -34,3 +34,16 @@ type AddUserToGroupRequestBody struct {
 	// in: body
 	Relation *UserGroupRelation `json:"relation"`
 }
+
+// swagger:parameters listGroupMembers
+type ListMembersParams struct {
+	// required: true
+	// in: query
+	GroupUid string `json:"group_uid"`
+}
+
+// swagger:parameters createGroup
+type CreateGroupRequestBody struct {
+	// in: query
+	Title string `json:"title"`
+}

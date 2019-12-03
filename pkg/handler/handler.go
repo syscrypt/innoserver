@@ -22,7 +22,8 @@ type postRepository interface {
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 	UniqueIdExists(ctx context.Context, uid string) (bool, error)
-	SelectLatest(ctx context.Context, limit int) ([]*model.Post, error)
+	SelectLatest(ctx context.Context, limit uint64) ([]*model.Post, error)
+	SelectLatestOfGroup(ctx context.Context, group *model.Group, limit uint64) ([]*model.Post, error)
 }
 
 type groupRepository interface {
@@ -81,8 +82,9 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
-	groupRouter.Path("/creategroup").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
-	groupRouter.Path("/addusertogroup").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
+	groupRouter.Path("/create").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	groupRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
+	groupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
