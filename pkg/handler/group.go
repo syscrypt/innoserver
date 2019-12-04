@@ -37,6 +37,10 @@ func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, in
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
+	err = s.groupRepo.AddUserToGroup(r.Context(), user, group)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	ret, err := json.Marshal(&model.UidResponse{UniqueID: uid})
 	if err != nil {
 		return err, http.StatusInternalServerError

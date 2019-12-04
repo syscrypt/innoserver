@@ -10,17 +10,6 @@ type Group struct {
 	UniqueID string `json:"-" db:"unique_id"`
 }
 
-// An user request model
-//
-// swagger:parameters createGroup
-type CreatePostBodyParams struct {
-	// The user to submit
-	//
-	// required: true
-	// in: body
-	Group *Group `json:"group"`
-}
-
 // swagger:model
 type UserGroupRelation struct {
 	Email    string `json:"email"`
