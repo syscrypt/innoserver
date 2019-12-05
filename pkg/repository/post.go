@@ -12,7 +12,7 @@ import (
 const (
 	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
 	selectLatestPosts   = `SELECT * FROM posts WHERE parent_uid = ""
-						   ORDER BY created_at DESC LIMIT ?`
+						   AND group_id IS NULL ORDER BY created_at DESC LIMIT ?`
 	selectLatestPostsOfGroup = `SELECT * FROM posts WHERE parent_uid = ""
 								AND group_id = ? ORDER BY created_at DESC LIMIT ?`
 	dqlGetPostByTitle     = `SELECT * FROM posts WHERE title = ?`
