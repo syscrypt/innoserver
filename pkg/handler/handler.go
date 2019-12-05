@@ -16,19 +16,19 @@ type userRepository interface {
 }
 
 type postRepository interface {
+	uniqueID
 	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
 	SelectByParentUid(ctx context.Context, uid string) ([]*model.Post, error)
 	GetByTitle(ctx context.Context, title string) (*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
-	UniqueIdExists(ctx context.Context, uid string) (bool, error)
 	SelectLatest(ctx context.Context, limit uint64) ([]*model.Post, error)
 	SelectLatestOfGroup(ctx context.Context, group *model.Group, limit uint64) ([]*model.Post, error)
 }
 
 type groupRepository interface {
+	uniqueID
 	GetByUid(ctx context.Context, uid string) (*model.Group, error)
-	UniqueIdExists(ctx context.Context, uid string) (bool, error)
 	Persist(ctx context.Context, group *model.Group) error
 	AddUserToGroup(ctx context.Context, user *model.User, group *model.Group) error
 	IsUserInGroup(ctx context.Context, user *model.User, group *model.Group) (bool, error)

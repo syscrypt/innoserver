@@ -116,6 +116,7 @@ func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.
 				errStr, _ := json.Marshal(errResp)
 				w.WriteHeader(status)
 				w.Write([]byte(errStr))
+				return
 			}
 		}
 		if status != http.StatusOK {
