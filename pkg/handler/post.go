@@ -32,7 +32,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	var maxSize int64
 	var path string
 	var err error
-	user, err := GetCurrentUser(r, s.userRepo)
+	user, err := GetCurrentUser(r)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -161,7 +161,7 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 		if err != nil {
 			return err, http.StatusBadRequest
 		}
-		user, _ := GetCurrentUser(r, s.userRepo)
+		user, _ := GetCurrentUser(r)
 		if isInGroup, err := s.groupRepo.IsUserInGroup(r.Context(), user, group); !isInGroup || err != nil {
 			if !isInGroup {
 				return errors.New("cannot fetch posts, user is not in group"), http.StatusUnauthorized

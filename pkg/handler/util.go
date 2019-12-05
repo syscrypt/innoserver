@@ -13,14 +13,11 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-func GetCurrentUser(r *http.Request, repo userRepository) (*model.User, error) {
-	if username, ok := r.Context().Value("username").(string); ok {
-		if username == "" {
-			return nil, errors.New("no username provided")
-		}
-		return repo.GetByUsername(r.Context(), username)
+func GetCurrentUser(r *http.Request) (*model.User, error) {
+	if user, ok := r.Context().Value("user").(*model.User); ok {
+		return user, nil
 	}
-	return nil, errors.New("error fetching username in context values")
+	return nil, errors.New("error fetching user in context value")
 }
 
 func hashAndSalt(passwd []byte) string {
@@ -36,7 +33,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 	var err error
 	expirationTime := time.Now().Add(5 * time.Hour)
 	claims := &model.Claims{
-		Username: user.Name,
+		Email: user.Email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},

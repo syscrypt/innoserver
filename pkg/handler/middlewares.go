@@ -59,8 +59,14 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
-			r = r.WithContext(context.WithValue(r.Context(), "username", claims.Username))
-			logrus.Println("user " + claims.Username + " authenticated")
+			if userRepo, ok := r.Context().Value("user_repository").(*userRepository); ok {
+				user, err := (*userRepo).GetByEmail(r.Context(), claims.Email)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				r = r.WithContext(context.WithValue(r.Context(), "user", user))
+			}
 			h.ServeHTTP(w, r)
 			return
 		}
@@ -70,6 +76,7 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 
 func groupMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 	})
 }
 

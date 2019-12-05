@@ -67,6 +67,7 @@ func NewHandler(injections ...interface{}) *Handler {
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
+	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 

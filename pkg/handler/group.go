@@ -23,7 +23,7 @@ func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, in
 	}
 	group := &model.Group{}
 	group.Title = title
-	user, err := GetCurrentUser(r, s.userRepo)
+	user, err := GetCurrentUser(r)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -76,7 +76,7 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	curUser, err := GetCurrentUser(r, s.userRepo)
+	curUser, err := GetCurrentUser(r)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
