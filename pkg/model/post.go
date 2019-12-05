@@ -63,12 +63,12 @@ type FetchPostsParams struct {
 
 // swagger:parameters uploadPost
 type PostFileBodyParams struct {
+	// in: query
+	GroupUid string `json:"group_uid"`
 	// in: formData
 	Title string `json:"title"`
 	// in: formData
 	ParentUID string `json:"parent_uid"`
-	// in: formData
-	GroupUid string `json:"group_uid"`
 	// in: formData
 	// enum: 0,1
 	Method int `json:"method"`

@@ -41,22 +41,19 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	post.ParentUID = r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	post.Type, err = strconv.Atoi(r.FormValue("type"))
-	g_uid := r.FormValue("group_uid")
+	g_uid := r.URL.Query().Get("group_uid")
 	if g_uid != "" {
 		if group, err := s.groupRepo.GetByUid(r.Context(), g_uid); err == nil {
 			post.GroupID.Int32 = int32(group.ID)
 			post.GroupID.Valid = true
 		}
 	}
-
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
 		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
-
 	if post.Type == model.PostTypeImage {
 		maxSize = s.config.MaxImageSize
 	} else if post.Type == model.PostTypeVideo {
@@ -64,7 +61,6 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	} else {
 		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
-
 	if path, err = s.UploadFile(r, maxSize, "file", post.Type); err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -76,7 +72,6 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 		return errors.New("error generating uid. " + err.Error()), http.StatusInternalServerError
 	}
 	post.UniqueID = uid
-
 	if err := s.postRepo.Persist(r.Context(), post); err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -84,7 +79,6 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-
 	SetJsonHeader(w)
 	w.Write(ret)
 	return nil, http.StatusOK

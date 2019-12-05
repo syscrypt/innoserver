@@ -18,6 +18,9 @@ const (
 	sqlGetUsersInGroup = `SELECT u.name, u.email, u.imei FROM users u WHERE
 						  u.id IN (SELECT gu.user_id FROM group_user gu WHERE
 						  gu.group_id = ?)`
+	sqlGetUserIDsInGrp = `SELECT u.id FROM users u WHERE u.id IN
+						  (SELECT gu.user_id FROM group_user gu WHERE
+						  gu.group_id =?)`
 )
 
 type groupRepository struct {
@@ -25,6 +28,7 @@ type groupRepository struct {
 	getByUid            *sqlx.Stmt
 	stmtAddUserToGroup  *sqlx.Stmt
 	stmtGetUsersInGroup *sqlx.Stmt
+	stmtGetUserIDsInGrp *sqlx.Stmt
 }
 
 func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
@@ -45,11 +49,16 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxGetUserIDsInGrp, err := db.PreparexContext(ctx, sqlGetUserIDsInGrp)
+	if err != nil {
+		return nil, err
+	}
 	return &groupRepository{
 		persistGroup:        ctxPersist,
 		getByUid:            ctxGetByUid,
 		stmtAddUserToGroup:  ctxAddUserToGroup,
 		stmtGetUsersInGroup: ctxGetUsersInGroup,
+		stmtGetUserIDsInGrp: ctxGetUserIDsInGrp,
 	}, err
 }
 
@@ -65,6 +74,9 @@ func (s *groupRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.stmtGetUsersInGroup.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.stmtGetUserIDsInGrp.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -99,8 +111,14 @@ func (s *groupRepository) GetUsersInGroup(ctx context.Context, group *model.Grou
 	return users, err
 }
 
+func (s *groupRepository) GetUserIDsInGroup(ctx context.Context, group *model.Group) ([]*model.User, error) {
+	users := []*model.User{}
+	err := s.stmtGetUserIDsInGrp.SelectContext(ctx, &users, group.ID)
+	return users, err
+}
+
 func (s *groupRepository) IsUserInGroup(ctx context.Context, user *model.User, group *model.Group) (bool, error) {
-	users, err := s.GetUsersInGroup(ctx, group)
+	users, err := s.GetUserIDsInGroup(ctx, group)
 	if err != nil {
 		return true, err
 	}

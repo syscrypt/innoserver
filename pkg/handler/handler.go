@@ -68,6 +68,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
 	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
+	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
@@ -99,6 +100,8 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	groupRouter.Use(keyMiddleware)
 	groupRouter.Use(authenticationMiddleware)
 	postRouter.Use(authenticationMiddleware)
+	groupRouter.Use(groupMiddleware)
+	postRouter.Use(groupMiddleware)
 
 	router.ServeHTTP(w, r)
 }

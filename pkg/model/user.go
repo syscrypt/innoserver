@@ -8,7 +8,7 @@ import (
 //
 // swagger:model
 type User struct {
-	ID       int    `json:"-"`
+	ID       int    `json:"-" db:"id"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Imei     string `json:"imei"`

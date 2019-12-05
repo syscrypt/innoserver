@@ -76,7 +76,30 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 
 func groupMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+		groupUid := r.URL.Query().Get("group_uid")
+		if groupUid == "" {
+			h.ServeHTTP(w, r)
+			return
+		}
+		user, err := GetCurrentUser(r)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if groupRepo, ok := r.Context().Value("group_repository").(*groupRepository); ok {
+			group, err := (*groupRepo).GetByUid(r.Context(), groupUid)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			inGroup, err := (*groupRepo).IsUserInGroup(r.Context(), user, group)
+			if !inGroup {
+				logrus.Error("user " + user.Name + " is not in group " + group.Title)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+		h.ServeHTTP(w, r)
 	})
 }
 
