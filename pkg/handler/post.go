@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -142,13 +143,18 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 //    500: description: Internal error
 func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (error, int) {
 	count := r.URL.Query().Get("limit")
+	group_uid := r.URL.Query().Get("group_uid")
 	icount, err := strconv.Atoi(count)
 	var group *model.Group
 	if count == "" || err != nil {
 		return errors.New("parameter count missing in request query or wrong type"), http.StatusBadRequest
 	}
+	group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
+	if err != nil && err != sql.ErrNoRows {
+		return err, http.StatusBadRequest
+	}
 	var posts []*model.Post
-	if group == nil {
+	if group.ID == 0 {
 		posts, err = s.postRepo.SelectLatest(r.Context(), uint64(icount))
 	} else {
 		posts, err = s.postRepo.SelectLatestOfGroup(r.Context(), group, uint64(icount))
