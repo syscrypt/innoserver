@@ -142,26 +142,10 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 //    500: description: Internal error
 func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (error, int) {
 	count := r.URL.Query().Get("limit")
-	group_uid := r.URL.Query().Get("group_uid")
 	icount, err := strconv.Atoi(count)
 	var group *model.Group
 	if count == "" || err != nil {
 		return errors.New("parameter count missing in request query or wrong type"), http.StatusBadRequest
-	}
-	if group_uid == "" {
-		group = nil
-	} else {
-		group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
-		if err != nil {
-			return err, http.StatusBadRequest
-		}
-		user, _ := GetCurrentUser(r)
-		if isInGroup, err := s.groupRepo.IsUserInGroup(r.Context(), user, group); !isInGroup || err != nil {
-			if !isInGroup {
-				return errors.New("cannot fetch posts, user is not in group"), http.StatusUnauthorized
-			}
-			return err, http.StatusInternalServerError
-		}
 	}
 	var posts []*model.Post
 	if group == nil {
