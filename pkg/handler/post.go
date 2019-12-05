@@ -39,21 +39,23 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	}
 	post := &model.Post{}
 	post.Title = r.FormValue("title")
-	post.ParentUID = r.FormValue("parent_uid")
+	parentUid := r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	post.Type, err = strconv.Atoi(r.FormValue("type"))
-	g_uid := r.URL.Query().Get("group_uid")
-	if g_uid != "" {
-		if group, err := s.groupRepo.GetByUid(r.Context(), g_uid); err == nil {
+	gUid := r.URL.Query().Get("group_uid")
+	if gUid != "" {
+		if group, err := s.groupRepo.GetByUid(r.Context(), gUid); err == nil {
 			post.GroupID.Int32 = int32(group.ID)
 			post.GroupID.Valid = true
 		}
 	}
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	if _, err := s.postRepo.GetByUid(r.Context(), post.ParentUID); err != nil {
+	parent, err := s.postRepo.GetByUid(r.Context(), parentUid)
+	if err != nil && err != sql.ErrNoRows {
 		return err, http.StatusBadRequest
+	}
+	if parent.ID != 0 {
+		post.ParentID.Int32 = int32(parent.ID)
+		post.ParentID.Valid = true
 	}
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
 		return errors.New("wrong type value for posted file"), http.StatusBadRequest
@@ -124,7 +126,11 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 	if parent == "" {
 		return errors.New("parameter parent_uid missing in request"), http.StatusBadRequest
 	}
-	posts, err := s.postRepo.SelectByParentUid(r.Context(), parent)
+	parentPost, err := s.postRepo.GetByUid(r.Context(), parent)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	posts, err := s.postRepo.SelectByParent(r.Context(), parentPost)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

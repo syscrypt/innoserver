@@ -26,7 +26,7 @@ type Post struct {
 	UserID    int           `json:"-" db:"user_id"`
 	Path      string        `json:"path"`
 	CreatedAt time.Time     `json:"created_at" db:"created_at"`
-	ParentUID string        `json:"parent_uid" db:"parent_uid"`
+	ParentID  sql.NullInt32 `json:"parent_id" db:"parent_id"`
 	Method    int           `json:"method"`
 	Type      int           `json:"type"`
 	GroupID   sql.NullInt32 `json:"group_id" db:"group_id"`

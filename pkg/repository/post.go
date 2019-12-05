@@ -11,15 +11,15 @@ import (
 
 const (
 	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
-	selectLatestPosts   = `SELECT * FROM posts WHERE parent_uid = ""
+	selectLatestPosts   = `SELECT * FROM posts WHERE parent_id IS NULL
 						   AND group_id IS NULL ORDER BY created_at DESC LIMIT ?`
-	selectLatestPostsOfGroup = `SELECT * FROM posts WHERE parent_uid = ""
+	selectLatestPostsOfGroup = `SELECT * FROM posts WHERE parent_id IS NULL
 								AND group_id = ? ORDER BY created_at DESC LIMIT ?`
-	dqlGetPostByTitle     = `SELECT * FROM posts WHERE title = ?`
-	dqlGetPostByUid       = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
-	selectChildPostsByUid = `SELECT * FROM posts WHERE parent_uid = ? ORDER BY created_at DESC`
-	persistPost           = `INSERT INTO posts
-						   (title, user_id, path, parent_uid,
+	dqlGetPostByTitle          = `SELECT * FROM posts WHERE title = ?`
+	dqlGetPostByUid            = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
+	selectChildPostsByParentID = `SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at DESC`
+	persistPost                = `INSERT INTO posts
+						   (title, user_id, path, parent_id,
 							method, type, unique_id, group_id)
 							VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 )
@@ -53,7 +53,7 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctxSelectByParent, err := db.PreparexContext(ctx, selectChildPostsByUid)
+	ctxSelectByParent, err := db.PreparexContext(ctx, selectChildPostsByParentID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (s *postRepository) GetByTitle(ctx context.Context, title string) (*model.P
 
 func (c *postRepository) Persist(ctx context.Context, post *model.Post) error {
 	_, err := c.persist.ExecContext(ctx, post.Title, post.UserID, post.Path,
-		post.ParentUID, post.Method, post.Type, post.UniqueID, post.GroupID)
+		post.ParentID, post.Method, post.Type, post.UniqueID, post.GroupID)
 	return err
 }
 
@@ -127,9 +127,9 @@ func (s *postRepository) GetByUid(ctx context.Context, uid string) (*model.Post,
 	return post, err
 }
 
-func (s *postRepository) SelectByParentUid(ctx context.Context, uid string) ([]*model.Post, error) {
+func (s *postRepository) SelectByParent(ctx context.Context, parent *model.Post) ([]*model.Post, error) {
 	posts := []*model.Post{}
-	err := s.selectByParent.SelectContext(ctx, &posts, uid)
+	err := s.selectByParent.SelectContext(ctx, &posts, parent.ID)
 	return posts, err
 }
 
