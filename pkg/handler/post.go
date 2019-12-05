@@ -52,6 +52,9 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
+	if _, err := s.postRepo.GetByUid(r.Context(), post.ParentUID); err != nil {
+		return err, http.StatusBadRequest
+	}
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
 		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
