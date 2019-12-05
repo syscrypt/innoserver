@@ -32,9 +32,10 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	var maxSize int64
 	var path string
 	var err error
-
-	user, err := s.GetCurrentUser(r)
-
+	user, err := GetCurrentUser(r, s.userRepo)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	post := &model.Post{}
 	post.Title = r.FormValue("title")
 	post.ParentUID = r.FormValue("parent_uid")
@@ -159,6 +160,13 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 		group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
 		if err != nil {
 			return err, http.StatusBadRequest
+		}
+		user, _ := GetCurrentUser(r, s.userRepo)
+		if isInGroup, err := s.groupRepo.IsUserInGroup(r.Context(), user, group); !isInGroup || err != nil {
+			if !isInGroup {
+				return errors.New("cannot fetch posts, user is not in group"), http.StatusUnauthorized
+			}
+			return err, http.StatusInternalServerError
 		}
 	}
 	var posts []*model.Post

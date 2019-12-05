@@ -68,6 +68,11 @@ func authenticationMiddleware(h http.Handler) http.Handler {
 	})
 }
 
+func groupMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	})
+}
+
 func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		config, ok := r.Context().Value("config").(*model.Config)
