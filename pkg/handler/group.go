@@ -129,3 +129,30 @@ func (s *Handler) ListGroupMembers(w http.ResponseWriter, r *http.Request) (erro
 	w.Write(ret)
 	return nil, http.StatusOK
 }
+
+// GroupInfo swagger:route POST /group/info group groupInfo
+//
+// Returns infos about specific group
+//
+// responses:
+//     200: Group
+//     400: description: bad request
+//     500: description: server internal error
+func (s *Handler) GroupInfo(w http.ResponseWriter, r *http.Request) (error, int) {
+	groupUidReq := &model.GroupUniqueIdPostReq{}
+	err := json.NewDecoder(r.Body).Decode(&groupUidReq.GroupUid)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUidReq.GroupUid.Uid)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	ret, err := json.Marshal(group)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	SetJsonHeader(w)
+	w.Write(ret)
+	return nil, http.StatusOK
+}

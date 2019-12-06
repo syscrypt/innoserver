@@ -77,7 +77,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Register))
 
 	postRouter := router.PathPrefix("/post").Subrouter()
-	postRouter.Path("/upload").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
+	postRouter.Path("/upload").Methods("POST", "GET", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
@@ -87,6 +87,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	groupRouter.Path("/create").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
 	groupRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
 	groupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
+	groupRouter.Path("/info").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",

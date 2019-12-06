@@ -56,8 +56,7 @@ type GetChildrenParams struct {
 type FetchPostsParams struct {
 	// required: true
 	// in: query
-	Limit uint `json:"limit"`
-
+	Limit    uint   `json:"limit"`
 	GroupUid string `json:"group_uid"`
 }
 

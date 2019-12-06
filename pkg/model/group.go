@@ -7,7 +7,7 @@ type Group struct {
 	ID       int    `json:"-"`
 	Title    string `json:"title"`
 	AdminID  int    `json:"-" db:"admin_id"`
-	UniqueID string `json:"-" db:"unique_id"`
+	UniqueID string `json:"unique_id" db:"unique_id"`
 }
 
 // swagger:model
@@ -31,8 +31,22 @@ type ListMembersParams struct {
 	GroupUid string `json:"group_uid"`
 }
 
+// swagger:parameters groupInfo
+type GroupUniqueIdPostReq struct {
+	// required: true
+	// in: body
+	GroupUid struct {
+		Uid string `json:"group_uid"`
+	}
+}
+
 // swagger:parameters createGroup
 type CreateGroupRequestBody struct {
 	// in: query
 	Title string `json:"title"`
+}
+
+// swagger:parameters group
+type GroupResponse struct {
+	Group *Group `json:"group"`
 }
