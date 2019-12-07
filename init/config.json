@@ -1,5 +1,6 @@
 {
   "run_level":"debug",
+  "logging_level":"debug",
   "jwt_secret":"secret",
   "server_address":"0.0.0.0",
   "server_port":"5000",

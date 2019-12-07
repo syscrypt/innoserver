@@ -20,7 +20,6 @@ func main() {
 	config := &model.Config{}
 	configPtr := flag.String("config", "./init/config.json", "path to the json config file")
 	flag.Parse()
-
 	if configJson, err := ioutil.ReadFile(*configPtr); err == nil {
 		if err = json.Unmarshal(configJson, config); err != nil {
 			logrus.Println("error parsing config file", *configPtr)
@@ -34,6 +33,20 @@ func main() {
 		logrus.Fatalln(err)
 	}
 	defer db.Close()
+	log := logrus.New()
+	switch config.LoggingLevel {
+	case "debug":
+		log.SetLevel(logrus.DebugLevel)
+	case "warning":
+		log.SetLevel(logrus.WarnLevel)
+	case "error":
+		log.SetLevel(logrus.ErrorLevel)
+	default:
+		log.SetLevel(logrus.InfoLevel)
+	}
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
 	logrus.Infoln("server started")
 
 	userRepository, err := repository.NewUserRepository(db)
@@ -72,6 +85,7 @@ func main() {
 			postRepository,
 			groupRepository,
 			config,
+			log,
 		),
 	}
 

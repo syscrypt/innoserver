@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
 )
@@ -45,6 +46,7 @@ type Handler struct {
 	groupRepo groupRepository
 
 	config *model.Config
+	log    *logrus.Logger
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -59,6 +61,8 @@ func NewHandler(injections ...interface{}) *Handler {
 			handler.groupRepo = v
 		case *model.Config:
 			handler.config = v
+		case *logrus.Logger:
+			handler.log = v
 		}
 	}
 	return handler
@@ -69,6 +73,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
 	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
 	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
+	r = r.WithContext(context.WithValue(r.Context(), "log", s.log))
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
@@ -96,6 +101,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir("assets/videos/"))))
 
 	router.Use(corsMiddleware)
+	router.Use(logMiddleware)
 	authRouter.Use(keyMiddleware)
 	postRouter.Use(keyMiddleware)
 	groupRouter.Use(keyMiddleware)

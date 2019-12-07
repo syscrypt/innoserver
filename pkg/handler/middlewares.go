@@ -124,3 +124,14 @@ func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.
 		}
 	})
 }
+
+func logMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if log, ok := r.Context().Value("log").(*logrus.Logger); ok {
+			log.WithField("url", r.URL.String()).Debugln("request made")
+		} else {
+			log.Infoln("hmmm...")
+		}
+		h.ServeHTTP(w, r)
+	})
+}
