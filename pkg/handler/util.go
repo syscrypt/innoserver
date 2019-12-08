@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -28,7 +29,7 @@ func hashAndSalt(passwd []byte) string {
 	return string(hash)
 }
 
-func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) {
+func GenerateToken(user *model.User, secret []byte) (*model.TokenResponse, error) {
 	response := &model.TokenResponse{}
 	var err error
 	expirationTime := time.Now().Add(5 * time.Hour)
@@ -39,7 +40,7 @@ func (s *Handler) generateToken(user *model.User) (*model.TokenResponse, error) 
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	response.Token, err = token.SignedString([]byte(s.config.JwtSecret))
+	response.Token, err = token.SignedString(secret)
 	if err != nil {
 		return nil, err
 	}
@@ -65,4 +66,29 @@ func generateUid(repo uniqueID, r *http.Request) (string, error) {
 
 func SetJsonHeader(w http.ResponseWriter) {
 	w.Header().Set("content-type", "application/json")
+}
+
+func logResponse(w http.ResponseWriter, msg string, entry *logrus.Entry, status int) (error, int) {
+	SetJsonHeader(w)
+	w.WriteHeader(status)
+	entry.Error(msg)
+	return nil, status
+}
+
+func WriteJsonResp(w http.ResponseWriter, msg interface{}) (error, int) {
+	ret, err := json.Marshal(msg)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	SetJsonHeader(w)
+	w.Write(ret)
+	return nil, http.StatusOK
+}
+
+func WriteTokenResp(w http.ResponseWriter, user *model.User, secret []byte) (error, int) {
+	token, err := GenerateToken(user, secret)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return WriteJsonResp(w, token)
 }

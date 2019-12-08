@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
+	"gitlab.com/innoserver/pkg/writer"
 )
 
 func corsMiddleware(h http.Handler) http.Handler {
@@ -105,22 +105,25 @@ func groupMiddleware(h http.Handler) http.Handler {
 
 func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ew := writer.New(w)
 		config, ok := r.Context().Value("config").(*model.Config)
-		err, status := f(w, r)
+		err, status := f(ew, r)
 		if err != nil {
-			logrus.Error(r.URL.String() + ": " + err.Error())
+			log, _ := r.Context().Value("log").(*logrus.Logger)
+			log.WithField("url", r.URL.String()).Error(err)
 			if ok && config.RunLevel == "debug" {
-				w.Header().Set("content-type", "application/json")
-				errResp := &model.ErrorResponse{}
-				errResp.Message = r.URL.String() + ": " + err.Error()
-				errStr, _ := json.Marshal(errResp)
-				w.WriteHeader(status)
-				w.Write([]byte(errStr))
+				rlog, _ := r.Context().Value("rlog").(*logrus.Logger)
+				rlog.SetOutput(ew)
+				SetJsonHeader(ew)
+				ew.WriteHeader(status)
+				rlog.WithFields(logrus.Fields{
+					"url": r.URL.String(),
+				}).Error(err)
 				return
 			}
 		}
-		if status != http.StatusOK {
-			w.WriteHeader(status)
+		if status != http.StatusOK && ew.Status == 0 {
+			ew.WriteHeader(status)
 		}
 	})
 }
@@ -129,8 +132,9 @@ func logMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if log, ok := r.Context().Value("log").(*logrus.Logger); ok {
 			log.WithField("url", r.URL.String()).Debugln("request made")
-		} else {
-			log.Infoln("hmmm...")
+		}
+		if rlog, ok := r.Context().Value("rlog").(*logrus.Logger); ok {
+			rlog.SetOutput(w)
 		}
 		h.ServeHTTP(w, r)
 	})

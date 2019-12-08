@@ -34,6 +34,11 @@ func main() {
 	}
 	defer db.Close()
 	log := logrus.New()
+	rlog := logrus.New()
+	rlog.SetFormatter(&logrus.JSONFormatter{})
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
 	switch config.LoggingLevel {
 	case "debug":
 		log.SetLevel(logrus.DebugLevel)
@@ -44,37 +49,34 @@ func main() {
 	default:
 		log.SetLevel(logrus.InfoLevel)
 	}
-	log.SetFormatter(&logrus.TextFormatter{
-		FullTimestamp: true,
-	})
-	logrus.Infoln("server started")
+	log.Infoln("configuration successfully")
+	log.Infoln("server started")
 
 	userRepository, err := repository.NewUserRepository(db)
 	if err != nil {
-		logrus.Errorln("error creating the user repository: ", err)
+		log.Errorln("error creating the user repository: ", err)
 	}
 	postRepository, err := repository.NewPostRepository(db)
 	if err != nil {
-		logrus.Errorln("error creating the post repository: ", err)
+		log.Errorln("error creating the post repository: ", err)
 	}
 	groupRepository, err := repository.NewGroupRepository(db)
 	if err != nil {
-		logrus.Errorln("error creating the group repository:", err)
+		log.Errorln("error creating the group repository:", err)
 	}
-
 	defer func() {
-		logrus.Println("closing database statements")
+		log.Println("closing database statements")
 		if err = userRepository.Close(); err != nil {
-			logrus.Errorln("user repository:", err.Error())
+			log.Errorln("user repository:", err.Error())
 		}
 		if err = postRepository.Close(); err != nil {
-			logrus.Errorln("post repository:", err.Error())
+			log.Errorln("post repository:", err.Error())
 		}
 		if err = groupRepository.Close(); err != nil {
-			logrus.Errorln("group repository:", err.Error())
+			log.Errorln("group repository:", err.Error())
 		}
 	}()
-
+	logger := [2]*logrus.Logger{log, rlog}
 	srvStr := config.ServerAddress + ":" + config.ServerPort
 	srv := &http.Server{
 		Addr:         srvStr,
@@ -85,11 +87,10 @@ func main() {
 			postRepository,
 			groupRepository,
 			config,
-			log,
+			logger,
 		),
 	}
-
 	if err := srv.ListenAndServe(); err != nil {
-		logrus.Errorln("error during server setup: ", err)
+		log.Errorln("error during server setup: ", err)
 	}
 }

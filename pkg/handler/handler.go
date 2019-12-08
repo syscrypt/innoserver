@@ -47,6 +47,7 @@ type Handler struct {
 
 	config *model.Config
 	log    *logrus.Logger
+	rlog   *logrus.Logger
 }
 
 func NewHandler(injections ...interface{}) *Handler {
@@ -61,9 +62,11 @@ func NewHandler(injections ...interface{}) *Handler {
 			handler.groupRepo = v
 		case *model.Config:
 			handler.config = v
-		case *logrus.Logger:
-			handler.log = v
+		case [2]*logrus.Logger:
+			handler.log = v[0]
+			handler.rlog = v[1]
 		}
+
 	}
 	return handler
 }
@@ -74,6 +77,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
 	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
 	r = r.WithContext(context.WithValue(r.Context(), "log", s.log))
+	r = r.WithContext(context.WithValue(r.Context(), "rlog", s.rlog))
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
