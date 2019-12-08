@@ -53,7 +53,7 @@ func generateUid(repo uniqueID, r *http.Request) (string, error) {
 		uid, _ := uuid.NewRandom()
 		exists, err := repo.UniqueIdExists(r.Context(), uid.String())
 		if err != nil {
-			return "", err
+			return "", errors.New("error while generating uid" + err.Error())
 		}
 		if !exists {
 			return uid.String(), nil
@@ -73,6 +73,15 @@ func logResponse(w http.ResponseWriter, msg string, entry *logrus.Entry, status 
 	w.WriteHeader(status)
 	entry.Error(msg)
 	return nil, status
+}
+
+func ErrMissingParam(w http.ResponseWriter, param string, log *logrus.Logger) (error, int) {
+	SetJsonHeader(w)
+	w.WriteHeader(http.StatusBadRequest)
+	log.WithFields(logrus.Fields{
+		"param": param,
+	}).Error("missing parameter in request")
+	return nil, http.StatusBadRequest
 }
 
 func WriteJsonResp(w http.ResponseWriter, msg interface{}) (error, int) {

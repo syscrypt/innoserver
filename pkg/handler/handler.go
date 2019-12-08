@@ -46,7 +46,7 @@ type Handler struct {
 	groupRepo groupRepository
 
 	config *model.Config
-	log    *logrus.Logger
+	log    *logrus.Entry
 	rlog   *logrus.Logger
 }
 
@@ -63,7 +63,7 @@ func NewHandler(injections ...interface{}) *Handler {
 		case *model.Config:
 			handler.config = v
 		case [2]*logrus.Logger:
-			handler.log = v[0]
+			handler.log = v[0].WithFields(logrus.Fields{})
 			handler.rlog = v[1]
 		}
 
@@ -73,6 +73,7 @@ func NewHandler(injections ...interface{}) *Handler {
 
 func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := mux.NewRouter()
+	s.log = s.log.WithFields(logrus.Fields{"url": r.URL.String()})
 	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
 	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
 	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))

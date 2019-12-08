@@ -25,6 +25,7 @@ func (s *Handler) Login(w http.ResponseWriter, r *http.Request) (error, int) {
 	if err != nil {
 		return err, http.StatusBadRequest
 	}
+	s.log.WithField("user", creds.Email).Infoln("login attempt made")
 	user, err := s.userRepo.GetByEmail(r.Context(), creds.Email)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)) != nil {
 		return logResponse(w, "password validation failed",
@@ -52,7 +53,7 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) (error, int) 
 	if err != nil {
 		return err, http.StatusBadRequest
 	}
-	logrus.Println(r.URL.String()+": Registration attempt made by new user", creds.Name)
+	s.log.WithField("user", creds.Name).Infoln("registration attempt made")
 	creds.Password = hashAndSalt([]byte(creds.Password))
 	err = s.userRepo.Persist(r.Context(), creds)
 	if err != nil {

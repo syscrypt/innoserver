@@ -2,10 +2,11 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 
 	"gitlab.com/innoserver/pkg/model"
 )
@@ -39,6 +40,9 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	}
 	post := &model.Post{}
 	post.Title = r.FormValue("title")
+	if post.Title == "" {
+		return ErrMissingParam(w, "title", s.rlog)
+	}
 	parentUid := r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	post.Type, err = strconv.Atoi(r.FormValue("type"))
@@ -49,6 +53,9 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 			post.GroupID.Valid = true
 		}
 	}
+	s.log.WithFields(logrus.Fields{
+		"title": post.Title, "user": user.Name,
+	}).Infoln("trying to upload new post...")
 	parent, err := s.postRepo.GetByUid(r.Context(), parentUid)
 	if err != nil && err != sql.ErrNoRows {
 		return err, http.StatusBadRequest
@@ -58,36 +65,33 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 		post.ParentID.Valid = true
 	}
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
-		return errors.New("wrong type value for posted file"), http.StatusBadRequest
+		return logResponse(w, "wrong type for post",
+			s.rlog.WithFields(logrus.Fields{
+				"type": post.Type,
+			}), http.StatusBadRequest)
 	}
 	if post.Type == model.PostTypeImage {
 		maxSize = s.config.MaxImageSize
 	} else if post.Type == model.PostTypeVideo {
 		maxSize = s.config.MaxVideoSize
-	} else {
-		return errors.New("wrong type value for posted file"), http.StatusBadRequest
 	}
 	if path, err = s.UploadFile(r, maxSize, "file", post.Type); err != nil {
 		return err, http.StatusInternalServerError
 	}
 	post.Path = path
 	post.UserID = user.ID
-
 	uid, err := generateUid(s.postRepo, r)
 	if err != nil || uid == "" {
-		return errors.New("error generating uid. " + err.Error()), http.StatusInternalServerError
+		return err, http.StatusInternalServerError
 	}
 	post.UniqueID = uid
 	if err := s.postRepo.Persist(r.Context(), post); err != nil {
 		return err, http.StatusInternalServerError
 	}
-	ret, err := json.Marshal(&model.UidResponse{UniqueID: post.UniqueID})
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	SetJsonHeader(w)
-	w.Write(ret)
-	return nil, http.StatusOK
+	s.log.WithFields(logrus.Fields{
+		"title": post.Title, "user": user.Name,
+	}).Infoln("post uploaded successfully")
+	return WriteJsonResp(w, &model.UidResponse{UniqueID: post.UniqueID})
 }
 
 // GetPost swagger:route GET /post/get post getPost
@@ -101,19 +105,16 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 func (s *Handler) GetPost(w http.ResponseWriter, r *http.Request) (error, int) {
 	uid := r.URL.Query().Get("uid")
 	if uid == "" {
-		return errors.New("parameter uid missing"), http.StatusBadRequest
+		return ErrMissingParam(w, "uid", s.rlog)
 	}
 	post, err := s.postRepo.GetByUid(r.Context(), uid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	ret, err := json.Marshal(post)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	w.Header().Set("content-type", "application/json")
-	w.Write(ret)
-	return nil, http.StatusOK
+	s.log.WithFields(logrus.Fields{
+		"title": post.Title, "uid": post.UniqueID,
+	}).Infoln("fetching post")
+	return WriteJsonResp(w, post)
 }
 
 // GetChildren swagger:route GET /post/getchildren post getChildren
@@ -134,13 +135,12 @@ func (s *Handler) GetChildren(w http.ResponseWriter, r *http.Request) (error, in
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	ret, err := json.Marshal(posts)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	SetJsonHeader(w)
-	w.Write(ret)
-	return nil, http.StatusOK
+	s.log.WithFields(logrus.Fields{
+		"parent":       parent,
+		"parent_title": parentPost.Title,
+		"children":     len(posts),
+	}).Infoln("fetching child posts")
+	return WriteJsonResp(w, posts)
 }
 
 // FetchLatestPosts swagger:route GET /post/selectlatest post fetchLatestPosts
@@ -155,8 +155,13 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 	group_uid := r.URL.Query().Get("group_uid")
 	icount, err := strconv.Atoi(count)
 	var group *model.Group
+	s.log.WithFields(logrus.Fields{
+		"limit":     count,
+		"group_uid": group_uid,
+	}).Infoln("fetching latest post")
 	if count == "" || err != nil {
-		return errors.New("parameter count missing in request query or wrong type"), http.StatusBadRequest
+		return logResponse(w, "missing parameter in request query, or wrong type",
+			s.rlog.WithField("limit", count), http.StatusBadRequest)
 	}
 	group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
 	if err != nil && err != sql.ErrNoRows {
@@ -174,11 +179,5 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	postsStr, err := json.Marshal(posts)
-	if err != nil {
-		return err, http.StatusInternalServerError
-	}
-	SetJsonHeader(w)
-	w.Write(postsStr)
-	return nil, http.StatusOK
+	return WriteJsonResp(w, posts)
 }

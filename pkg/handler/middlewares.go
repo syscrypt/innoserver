@@ -109,8 +109,8 @@ func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.
 		config, ok := r.Context().Value("config").(*model.Config)
 		err, status := f(ew, r)
 		if err != nil {
-			log, _ := r.Context().Value("log").(*logrus.Logger)
-			log.WithField("url", r.URL.String()).Error(err)
+			log, _ := r.Context().Value("log").(*logrus.Entry)
+			log.Error(err)
 			if ok && config.RunLevel == "debug" {
 				rlog, _ := r.Context().Value("rlog").(*logrus.Logger)
 				rlog.SetOutput(ew)
@@ -130,8 +130,9 @@ func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.
 
 func logMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if log, ok := r.Context().Value("log").(*logrus.Logger); ok {
-			log.WithField("url", r.URL.String()).Debugln("request made")
+		if log, ok := r.Context().Value("log").(*logrus.Entry); ok {
+			logger := log.WithField("url", r.URL.String())
+			logger.Debugln("incoming request")
 		}
 		if rlog, ok := r.Context().Value("rlog").(*logrus.Logger); ok {
 			rlog.SetOutput(w)
