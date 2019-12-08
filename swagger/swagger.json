@@ -1,0 +1,552 @@
+{
+  "consumes": [
+    "application/json",
+    "multipart/form-data",
+    "image/png"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "Innoserver",
+    "title": "Title:",
+    "termsOfService": "there are no TOS at this moment, use at your own risk we take no responsibility",
+    "version": "0.0.1"
+  },
+  "host": "127.0.0.1:5000",
+  "basePath": "/",
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "description": "Verifies user credentials and generates jw-token",
+        "tags": [
+          "user"
+        ],
+        "operationId": "login",
+        "parameters": [
+          {
+            "x-go-name": "User",
+            "description": "The user to submit",
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenResponse"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "401": {
+            "description": " wrong user credentials"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "description": "Persists a user in the database and generates jw-token",
+        "tags": [
+          "user"
+        ],
+        "operationId": "register",
+        "parameters": [
+          {
+            "x-go-name": "User",
+            "description": "The user to submit",
+            "name": "user",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/tokenResponse"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/group/adduser": {
+      "post": {
+        "description": "Adds a user (if exists) to a group (if exists)",
+        "tags": [
+          "group"
+        ],
+        "operationId": "addUserToGroup",
+        "parameters": [
+          {
+            "x-go-name": "Relation",
+            "description": "The user to be added",
+            "name": "relation",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserGroupRelation"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " user successfully added to group"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/group/create": {
+      "post": {
+        "description": "Creates a new Group with the requester as admin",
+        "tags": [
+          "group"
+        ],
+        "operationId": "createGroup",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Title",
+            "name": "title",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/uidResponse"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/group/info": {
+      "post": {
+        "description": "Returns infos about specific group",
+        "tags": [
+          "group"
+        ],
+        "operationId": "groupInfo",
+        "parameters": [
+          {
+            "name": "GroupUid",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "group_uid": {
+                  "type": "string",
+                  "x-go-name": "Uid"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group",
+            "schema": {
+              "$ref": "#/definitions/Group"
+            }
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/group/listmembers": {
+      "get": {
+        "description": "Returns a list with all members of specific group",
+        "tags": [
+          "group"
+        ],
+        "operationId": "listGroupMembers",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/post/get": {
+      "get": {
+        "description": "Fetch post over unique id",
+        "tags": [
+          "post"
+        ],
+        "operationId": "getPost",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "UniqueID",
+            "name": "uid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " postBody"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/post/getchildren": {
+      "get": {
+        "description": "Fetch all subposts of a specific parent post",
+        "tags": [
+          "post"
+        ],
+        "operationId": "getChildren",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ParentUid",
+            "name": "parent_uid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " successfully returned a list of subposts"
+          }
+        }
+      }
+    },
+    "/post/selectlatest": {
+      "get": {
+        "description": "Fetch all subposts of a specific parent post",
+        "tags": [
+          "post"
+        ],
+        "operationId": "fetchLatestPosts",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "uint64",
+            "x-go-name": "Limit",
+            "name": "limit",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " successfully returned a list of first X posts"
+          },
+          "400": {
+            "description": " Query error"
+          },
+          "500": {
+            "description": " Internal error"
+          }
+        }
+      }
+    },
+    "/post/upload": {
+      "post": {
+        "description": "\u003cp\u003eTakes, processes and persist posts data\nA post file request model.\nParameter \"Method\" is an integer and takes following numbers:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: 101 Method\u003c/li\u003e\n\u003cli\u003e1: Lotus Blossum\u003c/li\u003e\u003c/ul\u003e\n\u003cp\u003eType is an integer and describes the file type:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: image\u003c/li\u003e\n\u003cli\u003e1: video\u003c/li\u003e\u003c/ul\u003e",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "tags": [
+          "post"
+        ],
+        "operationId": "uploadPost",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Title",
+            "name": "title",
+            "in": "formData"
+          },
+          {
+            "type": "string",
+            "x-go-name": "ParentUID",
+            "name": "parent_uid",
+            "in": "formData"
+          },
+          {
+            "enum": [
+              0,
+              1
+            ],
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Method",
+            "name": "method",
+            "in": "formData"
+          },
+          {
+            "enum": [
+              0,
+              1
+            ],
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Type",
+            "name": "type",
+            "in": "formData"
+          },
+          {
+            "type": "file",
+            "x-go-name": "File",
+            "name": "file",
+            "in": "formData"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/uidResponse"
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " internal server error"
+          }
+        }
+      }
+    },
+    "/swagger": {
+      "get": {
+        "description": "Returns the swagger specifications",
+        "operationId": "swagger",
+        "responses": {
+          "200": {
+            "description": " Swagger specifications"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Group": {
+      "description": "Group model",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "unique_id": {
+          "type": "string",
+          "x-go-name": "UniqueID"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    },
+    "NullInt32": {
+      "description": "NullInt32 implements the Scanner interface so\nit can be used as a scan destination, similar to NullString.",
+      "type": "object",
+      "title": "NullInt32 represents an int32 that may be null.",
+      "properties": {
+        "Int32": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "Valid": {
+          "type": "boolean"
+        }
+      },
+      "x-go-package": "database/sql"
+    },
+    "Post": {
+      "description": "A post request model",
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "CreatedAt"
+        },
+        "group_id": {
+          "$ref": "#/definitions/NullInt32"
+        },
+        "method": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Method"
+        },
+        "parent_id": {
+          "$ref": "#/definitions/NullInt32"
+        },
+        "path": {
+          "type": "string",
+          "x-go-name": "Path"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Type"
+        },
+        "unique_id": {
+          "type": "string",
+          "x-go-name": "UniqueID"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    },
+    "User": {
+      "description": "User model",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "imei": {
+          "type": "string",
+          "x-go-name": "Imei"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "password": {
+          "type": "string",
+          "x-go-name": "Password"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    },
+    "UserGroupRelation": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "group_uid": {
+          "type": "string",
+          "x-go-name": "GroupUid"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    }
+  },
+  "responses": {
+    "errorResponse": {
+      "description": "An error response model",
+      "headers": {
+        "error_message": {
+          "type": "string"
+        }
+      }
+    },
+    "tokenResponse": {
+      "description": "Response for login and register routine",
+      "headers": {
+        "name": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "uidResponse": {
+      "description": "A response containing a unique id",
+      "headers": {
+        "unique_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "API_KEY",
+      "in": "header"
+    },
+    "api_token": {
+      "type": "apiKey",
+      "name": "X-Auth-Token",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "api_token": []
+    },
+    {
+      "api_key": []
+    }
+  ]
+}
