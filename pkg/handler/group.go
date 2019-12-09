@@ -147,7 +147,7 @@ func (s *Handler) ListGroupMembers(w http.ResponseWriter, r *http.Request) (erro
 	return WriteJsonResp(w, users)
 }
 
-// GroupInfo swagger:route POST /group/info group groupInfo
+// GroupInfo swagger:route GET /group/info group groupInfo
 //
 // Returns infos about specific group
 //
@@ -156,12 +156,11 @@ func (s *Handler) ListGroupMembers(w http.ResponseWriter, r *http.Request) (erro
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) GroupInfo(w http.ResponseWriter, r *http.Request) (error, int) {
-	groupUidReq := &model.GroupUniqueIdPostReq{}
-	err := json.NewDecoder(r.Body).Decode(&groupUidReq.GroupUid)
-	if err != nil {
-		return err, http.StatusBadRequest
+	group_uid := r.URL.Query().Get("group_uid")
+	if group_uid == "" {
+		return ErrMissingParam(w, "group_uid", s.rlog)
 	}
-	group, err := s.groupRepo.GetByUid(r.Context(), groupUidReq.GroupUid.Uid)
+	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

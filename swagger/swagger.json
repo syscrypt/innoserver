@@ -162,7 +162,7 @@
       }
     },
     "/group/info": {
-      "post": {
+      "get": {
         "description": "Returns infos about specific group",
         "tags": [
           "group"
@@ -170,18 +170,11 @@
         "operationId": "groupInfo",
         "parameters": [
           {
-            "name": "GroupUid",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "type": "object",
-              "properties": {
-                "group_uid": {
-                  "type": "string",
-                  "x-go-name": "Uid"
-                }
-              }
-            }
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query",
+            "required": true
           }
         ],
         "responses": {

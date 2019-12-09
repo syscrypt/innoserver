@@ -95,12 +95,13 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
-	groupRouter.Path("/create").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	groupRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
 
-	groupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
-	groupRouter.Path("/info").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
+	inGroupRouter := groupRouter.PathPrefix("").Subrouter()
+	inGroupRouter.Path("/create").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	inGroupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
 
-	adminRouter := groupRouter.PathPrefix("").Subrouter()
+	adminRouter := inGroupRouter.PathPrefix("").Subrouter()
 	adminRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
 	adminRouter.Path("/setvisibility").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.SetVisibility))
 
@@ -117,7 +118,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	groupRouter.Use(keyMiddleware)
 	groupRouter.Use(authenticationMiddleware)
 	postRouter.Use(authenticationMiddleware)
-	groupRouter.Use(groupMiddleware)
+	inGroupRouter.Use(groupMiddleware)
 	postRouter.Use(groupMiddleware)
 	adminRouter.Use(adminMiddleware)
 
