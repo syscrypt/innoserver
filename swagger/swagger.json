@@ -97,8 +97,14 @@
         "operationId": "addUserToGroup",
         "parameters": [
           {
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query",
+            "required": true
+          },
+          {
             "x-go-name": "Relation",
-            "description": "The user to be added",
             "name": "relation",
             "in": "body",
             "required": true,
@@ -219,6 +225,42 @@
                 "$ref": "#/definitions/User"
               }
             }
+          },
+          "400": {
+            "description": " bad request"
+          },
+          "500": {
+            "description": " server internal error"
+          }
+        }
+      }
+    },
+    "/group/setvisibility": {
+      "get": {
+        "description": "Sets the visibility/publicity for a specific group",
+        "tags": [
+          "group"
+        ],
+        "operationId": "setVisibility",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "GroupUid",
+            "name": "group_uid",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Visibility",
+            "name": "public",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " visibility/publicity successfully changed"
           },
           "400": {
             "description": " bad request"
@@ -502,10 +544,6 @@
         "email": {
           "type": "string",
           "x-go-name": "Email"
-        },
-        "group_uid": {
-          "type": "string",
-          "x-go-name": "GroupUid"
         }
       },
       "x-go-package": "gitlab.com/innoserver/pkg/model"

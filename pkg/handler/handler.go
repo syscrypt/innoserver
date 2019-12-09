@@ -34,6 +34,7 @@ type groupRepository interface {
 	AddUserToGroup(ctx context.Context, user *model.User, group *model.Group) error
 	IsUserInGroup(ctx context.Context, user *model.User, group *model.Group) (bool, error)
 	GetUsersInGroup(ctx context.Context, group *model.Group) ([]*model.User, error)
+	UpdateVisibility(ctx context.Context, group *model.Group) error
 }
 
 type uniqueID interface {
@@ -95,9 +96,13 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
 	groupRouter.Path("/create").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
-	groupRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
+
 	groupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
 	groupRouter.Path("/info").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
+
+	adminRouter := groupRouter.PathPrefix("").Subrouter()
+	adminRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
+	adminRouter.Path("/setvisibility").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.SetVisibility))
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
@@ -114,6 +119,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 	groupRouter.Use(groupMiddleware)
 	postRouter.Use(groupMiddleware)
+	adminRouter.Use(adminMiddleware)
 
 	router.ServeHTTP(w, r)
 }

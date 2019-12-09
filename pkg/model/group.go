@@ -13,13 +13,15 @@ type Group struct {
 
 // swagger:model
 type UserGroupRelation struct {
-	Email    string `json:"email"`
-	GroupUid string `json:"group_uid"`
+	Email string `json:"email"`
 }
 
 // swagger:parameters addUserToGroup
 type AddUserToGroupRequestBody struct {
-	// The user to be added
+	// required: true
+	// in: query
+	GroupUid string `json:"group_uid"`
+
 	// required: true
 	// in: body
 	Relation *UserGroupRelation `json:"relation"`
@@ -39,6 +41,17 @@ type GroupUniqueIdPostReq struct {
 	GroupUid struct {
 		Uid string `json:"group_uid"`
 	}
+}
+
+// swagger:parameters setVisibility
+type SetVisibilityReqBody struct {
+	// required: true
+	// in: query
+	GroupUid string `json:"group_uid"`
+
+	// required: true
+	// in: query
+	Visibility bool `json:"public"`
 }
 
 // swagger:parameters createGroup

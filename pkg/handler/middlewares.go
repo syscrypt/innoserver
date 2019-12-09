@@ -140,3 +140,53 @@ func logMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(w, r)
 	})
 }
+
+func adminMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		config, _ := r.Context().Value("config").(*model.Config)
+		rlog, _ := r.Context().Value("rlog").(*logrus.Logger)
+		ew := writer.New(w)
+		rlog.SetOutput(ew)
+		groupUid := r.URL.Query().Get("group_uid")
+		user, err := GetCurrentUser(r)
+		if err != nil {
+			if config.RunLevel == "debug" {
+				SetJsonHeader(ew)
+				w.WriteHeader(http.StatusUnauthorized)
+				rlog.WithFields(logrus.Fields{
+					"url": r.URL.String(),
+				}).WithError(err).Error("current user couldn't be fetched")
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if groupRepo, ok := r.Context().Value("group_repository").(*groupRepository); ok {
+			group, err := (*groupRepo).GetByUid(r.Context(), groupUid)
+			if err != nil {
+				if config.RunLevel == "debug" {
+					w.WriteHeader(http.StatusInternalServerError)
+					SetJsonHeader(ew)
+					rlog.WithFields(logrus.Fields{
+						"url": r.URL.String(),
+					}).WithError(err).Error("error fetching group")
+				}
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if group.AdminID != user.ID {
+				if config.RunLevel == "debug" {
+					SetJsonHeader(ew)
+					w.WriteHeader(http.StatusUnauthorized)
+					rlog.WithFields(logrus.Fields{
+						"url":   r.URL.String(),
+						"user":  user.Name,
+						"group": group.Title,
+					}).Error("operation is not allowed")
+				}
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+		}
+		h.ServeHTTP(ew, r)
+	})
+}

@@ -21,14 +21,16 @@ const (
 	sqlGetUserIDsInGrp = `SELECT u.id FROM users u WHERE u.id IN
 						  (SELECT gu.user_id FROM group_user gu WHERE
 						  gu.group_id =?)`
+	sqlUpdateGroup = `UPDATE groups SET public = ? WHERE id = ?`
 )
 
 type groupRepository struct {
-	persistGroup        *sqlx.Stmt
-	getByUid            *sqlx.Stmt
-	stmtAddUserToGroup  *sqlx.Stmt
-	stmtGetUsersInGroup *sqlx.Stmt
-	stmtGetUserIDsInGrp *sqlx.Stmt
+	persistGroup         *sqlx.Stmt
+	getByUid             *sqlx.Stmt
+	stmtAddUserToGroup   *sqlx.Stmt
+	stmtGetUsersInGroup  *sqlx.Stmt
+	stmtGetUserIDsInGrp  *sqlx.Stmt
+	stmtUpdateVisibility *sqlx.Stmt
 }
 
 func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
@@ -53,12 +55,17 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxUpdateVisibility, err := db.PreparexContext(ctx, sqlUpdateGroup)
+	if err != nil {
+		return nil, err
+	}
 	return &groupRepository{
-		persistGroup:        ctxPersist,
-		getByUid:            ctxGetByUid,
-		stmtAddUserToGroup:  ctxAddUserToGroup,
-		stmtGetUsersInGroup: ctxGetUsersInGroup,
-		stmtGetUserIDsInGrp: ctxGetUserIDsInGrp,
+		persistGroup:         ctxPersist,
+		getByUid:             ctxGetByUid,
+		stmtAddUserToGroup:   ctxAddUserToGroup,
+		stmtGetUsersInGroup:  ctxGetUsersInGroup,
+		stmtGetUserIDsInGrp:  ctxGetUserIDsInGrp,
+		stmtUpdateVisibility: ctxUpdateVisibility,
 	}, err
 }
 
@@ -77,6 +84,9 @@ func (s *groupRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.stmtGetUserIDsInGrp.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.stmtUpdateVisibility.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -129,4 +139,9 @@ func (s *groupRepository) IsUserInGroup(ctx context.Context, user *model.User, g
 		}
 	}
 	return false, nil
+}
+
+func (s *groupRepository) UpdateVisibility(ctx context.Context, group *model.Group) error {
+	_, err := s.stmtUpdateVisibility.ExecContext(ctx, group.Public, group.ID)
+	return err
 }

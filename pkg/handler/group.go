@@ -79,6 +79,7 @@ func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, in
 //     500: description: server internal error
 func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error, int) {
 	body := &model.UserGroupRelation{}
+	group_uid := r.URL.Query().Get("group_uid")
 	err := json.NewDecoder(r.Body).Decode(body)
 	if err != nil {
 		return err, http.StatusBadRequest
@@ -87,7 +88,7 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 	if err != nil {
 		return err, http.StatusBadRequest
 	}
-	group, err := s.groupRepo.GetByUid(r.Context(), body.GroupUid)
+	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -97,14 +98,6 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 	}
 	if curUser.Email == user.Email {
 		return logResponse(w, "cannot add requesting user to group",
-			s.rlog.WithFields(logrus.Fields{
-				"user":        curUser.Name,
-				"group_title": group.Title,
-				"group_uid":   group.UniqueID,
-			}), http.StatusUnauthorized)
-	}
-	if curUser.ID != group.AdminID {
-		return logResponse(w, "operation not permitted, requesting user is not the group admin",
 			s.rlog.WithFields(logrus.Fields{
 				"user":        curUser.Name,
 				"group_title": group.Title,
@@ -173,4 +166,43 @@ func (s *Handler) GroupInfo(w http.ResponseWriter, r *http.Request) (error, int)
 		return err, http.StatusInternalServerError
 	}
 	return WriteJsonResp(w, group)
+}
+
+// SetVisibility swagger:route GET /group/setvisibility group setVisibility
+//
+// Sets the visibility/publicity for a specific group
+//
+// responses:
+//     200: description: visibility/publicity successfully changed
+//     400: description: bad request
+//     500: description: server internal error
+func (s *Handler) SetVisibility(w http.ResponseWriter, r *http.Request) (error, int) {
+	group_uid := r.URL.Query().Get("group_uid")
+	visibility := r.URL.Query().Get("public")
+	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	if err != nil {
+		return logResponse(w, "error fetching group from db",
+			s.rlog.WithField("group_uid", group_uid).WithError(err),
+			http.StatusInternalServerError)
+	}
+	bVisible, err := strconv.ParseBool(visibility)
+	if err != nil {
+		return logResponse(w, "couldn't set groups visibility to requested value",
+			s.rlog.WithFields(logrus.Fields{
+				"group_uid":  group_uid,
+				"visibility": visibility,
+			}).WithError(err),
+			http.StatusBadRequest)
+	}
+	group.Public = bVisible
+	err = s.groupRepo.UpdateVisibility(r.Context(), group)
+	if err != nil {
+		return logResponse(w, "couldn't update group",
+			s.rlog.WithFields(logrus.Fields{
+				"group_uid": group_uid,
+				"title":     group.Title,
+			}).WithError(err),
+			http.StatusBadRequest)
+	}
+	return nil, http.StatusOK
 }
