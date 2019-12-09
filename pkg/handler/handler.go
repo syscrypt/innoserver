@@ -98,7 +98,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	groupRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
 
 	inGroupRouter := groupRouter.PathPrefix("").Subrouter()
-	inGroupRouter.Path("/create").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	inGroupRouter.Path("/create").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
 	inGroupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
 
 	adminRouter := inGroupRouter.PathPrefix("").Subrouter()

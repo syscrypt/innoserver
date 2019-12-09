@@ -9,7 +9,7 @@ import (
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// CreateGroup swagger:route GET /group/create group createGroup
+// CreateGroup swagger:route POST /group/create group createGroup
 //
 // Creates a new Group with the requester as admin
 // If public flag is not set, the group remains private
@@ -18,20 +18,16 @@ import (
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, int) {
-	title := r.URL.Query().Get("title")
-	public := r.URL.Query().Get("public")
-	if title == "" {
-		return ErrMissingParam(w, "title", s.rlog)
+	details := &model.CreateGroupRequestBody{}
+	err := json.NewDecoder(r.Body).Decode(details)
+	if err != nil {
+		return logResponse(w, "error encoding json",
+			s.rlog.WithFields(logrus.Fields{}).WithError(err), http.StatusBadRequest)
 	}
-	s.log.WithField("group", title).Infoln("trying to create new group...")
+	s.log.WithField("group", details.Info.Title).Infoln("trying to create new group...")
 	group := &model.Group{}
-	isPublic, err := strconv.ParseBool(public)
-	if err != nil || public == "" {
-		s.log.WithField("group", title).Warnln("public parameter missing or wrong type")
-	} else {
-		group.Public = isPublic
-	}
-	group.Title = title
+	group.Public = details.Info.Public
+	group.Title = details.Info.Title
 	user, err := GetCurrentUser(r)
 	if err != nil {
 		return err, http.StatusInternalServerError

@@ -56,11 +56,11 @@ type SetVisibilityReqBody struct {
 
 // swagger:parameters createGroup
 type CreateGroupRequestBody struct {
-	// required: true
-	// in: query
-	Title string `json:"title"`
-	// in: query
-	Public bool `json:"public"`
+	// in: body
+	Info struct {
+		Title  string `json:"title"`
+		Public bool   `json:"public"`
+	}
 }
 
 // swagger:parameters group

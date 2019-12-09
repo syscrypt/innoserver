@@ -127,7 +127,7 @@
       }
     },
     "/group/create": {
-      "get": {
+      "post": {
         "description": "Creates a new Group with the requester as admin\nIf public flag is not set, the group remains private",
         "tags": [
           "group"
@@ -135,17 +135,21 @@
         "operationId": "createGroup",
         "parameters": [
           {
-            "type": "string",
-            "x-go-name": "Title",
-            "name": "title",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "boolean",
-            "x-go-name": "Public",
-            "name": "public",
-            "in": "query"
+            "name": "Info",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "public": {
+                  "type": "boolean",
+                  "x-go-name": "Public"
+                },
+                "title": {
+                  "type": "string",
+                  "x-go-name": "Title"
+                }
+              }
+            }
           }
         ],
         "responses": {
