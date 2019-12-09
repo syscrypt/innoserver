@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	persistGroup = `INSERT INTO groups (unique_id, title, admin_id)
-					VALUES (?, ?, ?)`
+	persistGroup = `INSERT INTO groups (unique_id, title, admin_id, public)
+					VALUES (?, ?, ?, ?)`
 	dqlGetGroupByUid  = `SELECT * FROM groups WHERE unique_id = ? LIMIT 1`
 	sqlAddUserToGroup = `INSERT INTO group_user (group_id, user_id)
 						 VALUES (?, ?)`
@@ -83,7 +83,8 @@ func (s *groupRepository) Close() error {
 }
 
 func (s *groupRepository) Persist(ctx context.Context, group *model.Group) error {
-	_, err := s.persistGroup.ExecContext(ctx, group.UniqueID, group.Title, group.AdminID)
+	_, err := s.persistGroup.ExecContext(ctx, group.UniqueID, group.Title,
+		group.AdminID, group.Public)
 	return err
 }
 

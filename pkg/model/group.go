@@ -8,6 +8,7 @@ type Group struct {
 	Title    string `json:"title"`
 	AdminID  int    `json:"-" db:"admin_id"`
 	UniqueID string `json:"unique_id" db:"unique_id"`
+	Public   bool   `json:"public"`
 }
 
 // swagger:model
@@ -42,8 +43,11 @@ type GroupUniqueIdPostReq struct {
 
 // swagger:parameters createGroup
 type CreateGroupRequestBody struct {
+	// required: true
 	// in: query
 	Title string `json:"title"`
+	// in: query
+	Public bool `json:"public"`
 }
 
 // swagger:parameters group

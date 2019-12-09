@@ -93,7 +93,7 @@ func groupMiddleware(h http.Handler) http.Handler {
 				return
 			}
 			inGroup, err := (*groupRepo).IsUserInGroup(r.Context(), user, group)
-			if !inGroup {
+			if !inGroup && !group.Public {
 				logrus.Error("user " + user.Name + " is not in group " + group.Title)
 				w.WriteHeader(http.StatusUnauthorized)
 				return

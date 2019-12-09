@@ -3,26 +3,34 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"gitlab.com/innoserver/pkg/model"
 )
 
-// CreateGroup swagger:route POST /group/create group createGroup
+// CreateGroup swagger:route GET /group/create group createGroup
 //
 // Creates a new Group with the requester as admin
-//
+// If public flag is not set, the group remains private
 // responses:
 //     200: uidResponse
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, int) {
 	title := r.URL.Query().Get("title")
+	public := r.URL.Query().Get("public")
 	if title == "" {
 		return ErrMissingParam(w, "title", s.rlog)
 	}
 	s.log.WithField("group", title).Infoln("trying to create new group...")
 	group := &model.Group{}
+	isPublic, err := strconv.ParseBool(public)
+	if err != nil || public == "" {
+		s.log.WithField("group", title).Warnln("public parameter missing or wrong type")
+	} else {
+		group.Public = isPublic
+	}
 	group.Title = title
 	user, err := GetCurrentUser(r)
 	if err != nil {
@@ -38,9 +46,15 @@ func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, in
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
+	var logInfo string
+	if group.Public {
+		logInfo = "public"
+	} else {
+		logInfo = "private"
+	}
 	s.log.WithFields(logrus.Fields{
 		"title": group.Title, "uid": group.UniqueID,
-	}).Infoln("group created")
+	}).Infoln(logInfo + " group created")
 	newGroup, err := s.groupRepo.GetByUid(r.Context(), group.UniqueID)
 	if err != nil {
 		return err, http.StatusInternalServerError

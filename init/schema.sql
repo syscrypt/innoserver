@@ -16,6 +16,7 @@ CREATE TABLE groups (
   title varchar(255) NOT NULL,
   admin_id int NOT NULL,
   unique_id varchar(255) NOT NULL UNIQUE,
+  public tinyint(1) DEFAULT 0,
   FOREIGN KEY(admin_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

@@ -94,7 +94,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
-	groupRouter.Path("/create").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
+	groupRouter.Path("/create").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.CreateGroup))
 	groupRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
 	groupRouter.Path("/listmembers").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.ListGroupMembers))
 	groupRouter.Path("/info").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))

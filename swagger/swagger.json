@@ -121,8 +121,8 @@
       }
     },
     "/group/create": {
-      "post": {
-        "description": "Creates a new Group with the requester as admin",
+      "get": {
+        "description": "Creates a new Group with the requester as admin\nIf public flag is not set, the group remains private",
         "tags": [
           "group"
         ],
@@ -132,6 +132,13 @@
             "type": "string",
             "x-go-name": "Title",
             "name": "title",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "Public",
+            "name": "public",
             "in": "query"
           }
         ],
@@ -396,6 +403,10 @@
       "description": "Group model",
       "type": "object",
       "properties": {
+        "public": {
+          "type": "boolean",
+          "x-go-name": "Public"
+        },
         "title": {
           "type": "string",
           "x-go-name": "Title"
