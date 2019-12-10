@@ -23,15 +23,20 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 	ctx := context.Background()
 	persist, _ := sqlz.Newx(db).InsertInto("groups").Columns("unique_id", "title",
 		"admin_id", "public").Values("?", "?", "?", "?").ToSQL(false)
+
 	getByUid, _ := sqlz.Newx(db).Select("*").From("groups").
 		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
+
 	addUser, _ := sqlz.Newx(db).InsertInto("group_user").
 		Columns("group_id", "user_id").Values("?", "?").ToSQL(false)
+
 	listMembers, _ := sqlz.Newx(db).Select("users.name", "users.email", "users.imei").
 		From("users").InnerJoin("group_user", sqlz.Eq("users.id", sqlz.Indirect("group_user.user_id"))).
 		Where(sqlz.Eq("group_user.group_id", "?")).ToSQL(false)
+
 	listUserIds, _ := sqlz.Newx(db).Select("user_id AS id").From("group_user").
 		Where(sqlz.Eq("group_id", "?")).ToSQL(false)
+
 	updateVisibility, _ := sqlz.Newx(db).Update("groups").Set("public", "?").
 		Where(sqlz.Eq("id", "?")).ToSQL(false)
 

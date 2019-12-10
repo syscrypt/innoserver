@@ -25,18 +25,24 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	limit := " LIMIT ?"
 	listAllByUserID, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Eq("user_id", "?")).ToSQL(false)
+
 	selectLatest, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.IsNull("parent_id"), sqlz.IsNull("group_id")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+
 	selectLatestOfGroup, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.IsNull("parent_id"), sqlz.Eq("group_id", "?")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+
 	getByTitle, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Like("title", "%?%")).ToSQL(false)
+
 	getByUid, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
+
 	selectChildren, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Eq("parent_id", "?")).OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+
 	persist, _ := sqlz.Newx(db).InsertInto("posts").Columns("title", "user_id", "path",
 		"parent_id", "method", "type", "unique_id", "group_id").
 		Values("?", "?", "?", "?", "?", "?", "?", "?").ToSQL(false)

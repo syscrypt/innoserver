@@ -19,8 +19,10 @@ func NewUserRepository(db *sqlx.DB) (*userRepository, error) {
 	ctx := context.Background()
 	GetByName, _ := sqlz.Newx(db).Select("*").From("users").
 		Where(sqlz.Eq("name", "?")).Limit(1).ToSQL(false)
+
 	GetByMail, _ := sqlz.Newx(db).Select("*").From("users").
 		Where(sqlz.Eq("email", "?")).Limit(1).ToSQL(false)
+
 	Persist, _ := sqlz.Newx(db).InsertInto("users").Columns("name", "email",
 		"imei", "password").Values("?", "?", "?", "?").ToSQL(false)
 
