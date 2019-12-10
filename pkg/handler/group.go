@@ -19,7 +19,7 @@ import (
 //     500: description: server internal error
 func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, int) {
 	details := &model.CreateGroupRequestBody{}
-	err := json.NewDecoder(r.Body).Decode(details)
+	err := json.NewDecoder(r.Body).Decode(&details.Info)
 	if err != nil {
 		return logResponse(w, "error encoding json",
 			s.rlog.WithFields(logrus.Fields{}).WithError(err), http.StatusBadRequest)
