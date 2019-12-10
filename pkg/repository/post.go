@@ -4,24 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/ido50/sqlz"
 	"github.com/jmoiron/sqlx"
 
 	"gitlab.com/innoserver/pkg/model"
-)
-
-const (
-	dqlAllPostsByUserID = `SELECT * FROM posts WHERE user_id = ?`
-	selectLatestPosts   = `SELECT * FROM posts WHERE parent_id IS NULL
-						   AND group_id IS NULL ORDER BY created_at DESC LIMIT ?`
-	selectLatestPostsOfGroup = `SELECT * FROM posts WHERE parent_id IS NULL
-								AND group_id = ? ORDER BY created_at DESC LIMIT ?`
-	dqlGetPostByTitle          = `SELECT * FROM posts WHERE title = ?`
-	dqlGetPostByUid            = `SELECT * FROM posts WHERE unique_id = ? LIMIT 1`
-	selectChildPostsByParentID = `SELECT * FROM posts WHERE parent_id = ? ORDER BY created_at DESC`
-	persistPost                = `INSERT INTO posts
-						   (title, user_id, path, parent_id,
-							method, type, unique_id, group_id)
-							VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 )
 
 type postRepository struct {
@@ -36,36 +22,53 @@ type postRepository struct {
 
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	ctx := context.Background()
+	limit := " LIMIT ?"
+	listAllByUserID, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.Eq("user_id", "?")).ToSQL(false)
+	selectLatest, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.IsNull("parent_id"), sqlz.IsNull("group_id")).
+		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+	selectLatestOfGroup, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.IsNull("parent_id"), sqlz.Eq("group_id", "?")).
+		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+	getByTitle, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.Like("title", "%?%")).ToSQL(false)
+	getByUid, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
+	selectChildren, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.Eq("parent_id", "?")).OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+	persist, _ := sqlz.Newx(db).InsertInto("posts").Columns("title", "user_id", "path",
+		"parent_id", "method", "type", "unique_id", "group_id").
+		Values("?", "?", "?", "?", "?", "?", "?", "?").ToSQL(false)
 
-	ctxPersistPost, err := db.PreparexContext(ctx, persistPost)
+	ctxPersistPost, err := db.PreparexContext(ctx, persist)
 	if err != nil {
 		return nil, err
 	}
-	ctxSelectByUserID, err := db.PreparexContext(ctx, dqlAllPostsByUserID)
+	ctxSelectByUserID, err := db.PreparexContext(ctx, listAllByUserID)
 	if err != nil {
 		return nil, err
 	}
-	ctxGetByTitle, err := db.PreparexContext(ctx, dqlGetPostByTitle)
+	ctxGetByTitle, err := db.PreparexContext(ctx, getByTitle)
 	if err != nil {
 		return nil, err
 	}
-	ctxGetByUID, err := db.PreparexContext(ctx, dqlGetPostByUid)
+	ctxGetByUID, err := db.PreparexContext(ctx, getByUid)
 	if err != nil {
 		return nil, err
 	}
-	ctxSelectByParent, err := db.PreparexContext(ctx, selectChildPostsByParentID)
+	ctxSelectByParent, err := db.PreparexContext(ctx, selectChildren)
 	if err != nil {
 		return nil, err
 	}
-	ctxSelectLatest, err := db.PreparexContext(ctx, selectLatestPosts)
+	ctxSelectLatest, err := db.PreparexContext(ctx, selectLatest+limit)
 	if err != nil {
 		return nil, err
 	}
-	ctxSelectLatestOfGroup, err := db.PreparexContext(ctx, selectLatestPostsOfGroup)
+	ctxSelectLatestOfGroup, err := db.PreparexContext(ctx, selectLatestOfGroup+limit)
 	if err != nil {
 		return nil, err
 	}
-
 	return &postRepository{
 		persist:             ctxPersistPost,
 		selectByUserID:      ctxSelectByUserID,
@@ -109,10 +112,10 @@ func (s *postRepository) SelectByUserID(ctx context.Context, id int) ([]*model.P
 	return posts, err
 }
 
-func (s *postRepository) GetByTitle(ctx context.Context, title string) (*model.Post, error) {
-	post := &model.Post{}
-	err := s.getByTitle.GetContext(ctx, post, title)
-	return post, err
+func (s *postRepository) GetByTitle(ctx context.Context, title string) ([]*model.Post, error) {
+	posts := []*model.Post{}
+	err := s.getByTitle.SelectContext(ctx, posts, title)
+	return posts, err
 }
 
 func (c *postRepository) Persist(ctx context.Context, post *model.Post) error {

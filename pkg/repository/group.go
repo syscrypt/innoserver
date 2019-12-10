@@ -4,24 +4,10 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/ido50/sqlz"
 	"github.com/jmoiron/sqlx"
 
 	"gitlab.com/innoserver/pkg/model"
-)
-
-const (
-	persistGroup = `INSERT INTO groups (unique_id, title, admin_id, public)
-					VALUES (?, ?, ?, ?)`
-	dqlGetGroupByUid  = `SELECT * FROM groups WHERE unique_id = ? LIMIT 1`
-	sqlAddUserToGroup = `INSERT INTO group_user (group_id, user_id)
-						 VALUES (?, ?)`
-	sqlGetUsersInGroup = `SELECT u.name, u.email, u.imei FROM users u WHERE
-						  u.id IN (SELECT gu.user_id FROM group_user gu WHERE
-						  gu.group_id = ?)`
-	sqlGetUserIDsInGrp = `SELECT u.id FROM users u WHERE u.id IN
-						  (SELECT gu.user_id FROM group_user gu WHERE
-						  gu.group_id =?)`
-	sqlUpdateGroup = `UPDATE groups SET public = ? WHERE id = ?`
 )
 
 type groupRepository struct {
@@ -35,27 +21,41 @@ type groupRepository struct {
 
 func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 	ctx := context.Background()
-	ctxPersist, err := db.PreparexContext(ctx, persistGroup)
+	persist, _ := sqlz.Newx(db).InsertInto("groups").Columns("unique_id", "title",
+		"admin_id", "public").Values("?", "?", "?", "?").ToSQL(false)
+	getByUid, _ := sqlz.Newx(db).Select("*").From("groups").
+		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
+	addUser, _ := sqlz.Newx(db).InsertInto("group_user").
+		Columns("group_id", "user_id").Values("?", "?").ToSQL(false)
+	listMembers, _ := sqlz.Newx(db).Select("users.name", "users.email", "users.imei").
+		From("users").InnerJoin("group_user", sqlz.Eq("users.id", sqlz.Indirect("group_user.user_id"))).
+		Where(sqlz.Eq("group_user.group_id", "?")).ToSQL(false)
+	listUserIds, _ := sqlz.Newx(db).Select("user_id AS id").From("group_user").
+		Where(sqlz.Eq("group_id", "?")).ToSQL(false)
+	updateVisibility, _ := sqlz.Newx(db).Update("groups").Set("public", "?").
+		Where(sqlz.Eq("id", "?")).ToSQL(false)
+
+	ctxPersist, err := db.PreparexContext(ctx, persist)
 	if err != nil {
 		return nil, err
 	}
-	ctxGetByUid, err := db.PreparexContext(ctx, dqlGetGroupByUid)
+	ctxGetByUid, err := db.PreparexContext(ctx, getByUid)
 	if err != nil {
 		return nil, err
 	}
-	ctxAddUserToGroup, err := db.PreparexContext(ctx, sqlAddUserToGroup)
+	ctxAddUserToGroup, err := db.PreparexContext(ctx, addUser)
 	if err != nil {
 		return nil, err
 	}
-	ctxGetUsersInGroup, err := db.PreparexContext(ctx, sqlGetUsersInGroup)
+	ctxGetUsersInGroup, err := db.PreparexContext(ctx, listMembers)
 	if err != nil {
 		return nil, err
 	}
-	ctxGetUserIDsInGrp, err := db.PreparexContext(ctx, sqlGetUserIDsInGrp)
+	ctxGetUserIDsInGrp, err := db.PreparexContext(ctx, listUserIds)
 	if err != nil {
 		return nil, err
 	}
-	ctxUpdateVisibility, err := db.PreparexContext(ctx, sqlUpdateGroup)
+	ctxUpdateVisibility, err := db.PreparexContext(ctx, updateVisibility)
 	if err != nil {
 		return nil, err
 	}
