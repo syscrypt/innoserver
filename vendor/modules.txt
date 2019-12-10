@@ -6,6 +6,8 @@ github.com/go-sql-driver/mysql
 github.com/google/uuid
 # github.com/gorilla/mux v1.7.3
 github.com/gorilla/mux
+# github.com/ido50/sqlz v0.0.0-20191128141335-dab5be663cd1
+github.com/ido50/sqlz
 # github.com/jmoiron/sqlx v1.2.0
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
