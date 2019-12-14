@@ -37,7 +37,6 @@ build:
 	$(CC) $(BLD) -o $(BINDIR)$(EXEC) $(SRCDIR)$(SRC)
 
 run:
-	sleep 4
 	@$(BINDIR)$(EXEC) -config=$(CONFIG)
 
 run-docker:

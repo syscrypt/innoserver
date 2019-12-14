@@ -20,7 +20,7 @@ type postRepository interface {
 	uniqueID
 	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
 	SelectByParent(ctx context.Context, parent *model.Post) ([]*model.Post, error)
-	GetByTitle(ctx context.Context, title string) (*model.Post, error)
+	GetByTitle(ctx context.Context, title string) ([]*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 	SelectLatest(ctx context.Context, limit uint64) ([]*model.Post, error)
