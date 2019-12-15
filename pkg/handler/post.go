@@ -31,51 +31,28 @@ import (
 //     400: description: bad request
 //     500: description: internal server error
 func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int) {
-	var maxSize int64
-	var path string
-	var err error
 	user, err := GetCurrentUser(r)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 	post := &model.Post{}
-	post.Title = r.FormValue("title")
-	if post.Title == "" {
-		return ErrMissingParam(w, "title", s.rlog)
-	}
-	parentUid := r.FormValue("parent_uid")
-	post.Method, err = strconv.Atoi(r.FormValue("method"))
-	post.Type, err = strconv.Atoi(r.FormValue("type"))
-	gUid := r.URL.Query().Get("group_uid")
-	if gUid != "" {
-		if group, err := s.groupRepo.GetByUid(r.Context(), gUid); err == nil {
-			post.GroupID.Int32 = int32(group.ID)
-			post.GroupID.Valid = true
-		}
+	err = initNewPostUpload(post, s, r)
+	if err != nil {
+		s.rlog.WithError(err)
 	}
 	s.log.WithFields(logrus.Fields{
 		"title": post.Title, "user": user.Name,
 	}).Infoln("trying to upload new post...")
-	parent, err := s.postRepo.GetByUid(r.Context(), parentUid)
-	if err != nil && err != sql.ErrNoRows {
-		return err, http.StatusBadRequest
-	}
-	if parent.ID != 0 {
-		post.ParentID.Int32 = int32(parent.ID)
-		post.ParentID.Valid = true
-	}
+
 	if post.Type < model.PostTypeImage || post.Type > model.PostTypeVideo {
 		return logResponse(w, "wrong type for post",
 			s.rlog.WithFields(logrus.Fields{
 				"type": post.Type,
 			}), http.StatusBadRequest)
 	}
-	if post.Type == model.PostTypeImage {
-		maxSize = s.config.MaxImageSize
-	} else if post.Type == model.PostTypeVideo {
-		maxSize = s.config.MaxVideoSize
-	}
-	if path, err = s.UploadFile(r, maxSize, "file", post.Type); err != nil {
+	maxSize := determineMaxPostSize(post, s)
+	path, _, err := s.UploadFile(r, maxSize, "file", post.Type)
+	if err != nil {
 		return err, http.StatusInternalServerError
 	}
 	post.Path = path
