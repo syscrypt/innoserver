@@ -160,3 +160,13 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 	}
 	return WriteJsonResp(w, posts)
 }
+
+// SetOptions swagger:route POST /post/setoptions post setOptions
+//
+// Set a List of options for a post
+//
+// responses:
+//    200: description: successfully updated posts options
+func (s *Handler) SetOptions(w http.ResponseWriter, r *http.Request) (error, int) {
+	return nil, http.StatusOK
+}

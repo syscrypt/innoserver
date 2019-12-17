@@ -94,6 +94,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
+	postRouter.Path("/addoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.SetOptions))
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
