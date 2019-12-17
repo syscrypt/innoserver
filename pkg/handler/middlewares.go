@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -133,6 +135,25 @@ func logMiddleware(h http.Handler) http.Handler {
 		if log, ok := r.Context().Value("log").(*logrus.Entry); ok {
 			logger := log.WithField("url", r.URL.String())
 			logger.Debugln("incoming request")
+			buf, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				log.WithError(err).Debugln("error while decode request body")
+				h.ServeHTTP(w, r)
+				return
+			}
+			if len(buf) == 0 {
+				h.ServeHTTP(w, r)
+				return
+			}
+			rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+			rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+			r.Body = rdr2
+			log.WithFields(logrus.Fields{
+				"body":   rdr1,
+				"ip":     r.RemoteAddr,
+				"method": r.Method,
+				"header": r.Header,
+			}).Debugln("request body")
 		}
 		if rlog, ok := r.Context().Value("rlog").(*logrus.Logger); ok {
 			rlog.SetOutput(w)
