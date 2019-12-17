@@ -57,7 +57,7 @@ swag-doc:
 	$(SWAGGERBIN) serve $(SWAGGERDIR)/$(SWAGGERFILE)
 
 swag-gen-doc:
-	$(SWAGGERBIN) generate spec -o $(SWAGGERDIR)/$(SWAGGERFILE)
+	$(SWAGGERBIN) generate spec -m -o $(SWAGGERDIR)/$(SWAGGERFILE)
 	$(SWAGGERBIN) validate $(SWAGGERDIR)/$(SWAGGERFILE)
 
 swagger-ui:
