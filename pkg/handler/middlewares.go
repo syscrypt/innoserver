@@ -141,13 +141,14 @@ func logMiddleware(h http.Handler) http.Handler {
 				h.ServeHTTP(w, r)
 				return
 			}
-			if len(buf) == 0 {
-				h.ServeHTTP(w, r)
-				return
-			}
 			rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
 			rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
 			r.Body = rdr2
+			if _, _, err := r.FormFile("file"); err == nil {
+				log.WithField("file", "true").Debugln("request body")
+				h.ServeHTTP(w, r)
+				return
+			}
 			log.WithFields(logrus.Fields{
 				"body":   rdr1,
 				"ip":     r.RemoteAddr,
