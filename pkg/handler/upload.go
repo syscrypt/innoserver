@@ -36,7 +36,7 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	defer upFile.Close()
 	contentType := handler.Header.Get("Content-Type")
 	extension := "." + contentType[strings.LastIndex(contentType, "/")+1:]
-	outDir := initOutputDir(fType)
+	outDir := initOutputDir(s, fType)
 	fileName := generateFileName()
 
 	s.log.WithFields(logrus.Fields{
@@ -56,11 +56,11 @@ func (s *Handler) UploadFile(r *http.Request, maxSize int64, file string, fType 
 	return fileName + extension, fileName + "_thumbnail" + extension, nil
 }
 
-func initOutputDir(fType int) string {
+func initOutputDir(s *Handler, fType int) string {
 	if fType == model.PostTypeImage {
-		return "./assets/images/"
+		return "." + s.config.ImagePath
 	}
-	return "./assets/videos/"
+	return "." + s.config.VideoPath
 }
 
 func generateFileName() string {

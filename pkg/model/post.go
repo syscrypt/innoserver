@@ -64,16 +64,25 @@ type FetchPostsParams struct {
 type PostFileBodyParams struct {
 	// in: query
 	GroupUid string `json:"group_uid"`
+
+	// required: true
 	// in: formData
 	Title string `json:"title"`
+
 	// in: formData
 	ParentUID string `json:"parent_uid"`
+
+	// required: true
 	// in: formData
 	// enum: 0,1
 	Method int `json:"method"`
+
+	// required: true
 	// in: formData
 	// enum: 0,1
 	Type int `json:"type"`
+
+	// required: true
 	// in: formData
 	// swagger:file
 	// name: file

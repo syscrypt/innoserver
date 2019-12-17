@@ -80,6 +80,8 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
 	r = r.WithContext(context.WithValue(r.Context(), "log", s.log))
 	r = r.WithContext(context.WithValue(r.Context(), "rlog", s.rlog))
+	router.Path("/config").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetConfig))
+
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
