@@ -25,6 +25,10 @@ type postRepository interface {
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 	SelectLatest(ctx context.Context, limit uint64) ([]*model.Post, error)
 	SelectLatestOfGroup(ctx context.Context, group *model.Group, limit uint64) ([]*model.Post, error)
+	AddOptions(ctx context.Context, post *model.Post, options []*model.Option) error
+	RemoveOptions(ctx context.Context, post *model.Post) error
+	SetOptions(ctx context.Context, post *model.Post, options []*model.Option) error
+	SelectOptions(ctx context.Context, post *model.Post) ([]*model.Option, error)
 }
 
 type groupRepository interface {
@@ -67,7 +71,6 @@ func NewHandler(injections ...interface{}) *Handler {
 			handler.log = v[0].WithFields(logrus.Fields{})
 			handler.rlog = v[1]
 		}
-
 	}
 	return handler
 }
@@ -94,7 +97,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
-	postRouter.Path("/addoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.SetOptions))
+	postRouter.Path("/setoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.SetOptions))
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()

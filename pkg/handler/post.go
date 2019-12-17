@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -168,5 +169,32 @@ func (s *Handler) FetchLatestPosts(w http.ResponseWriter, r *http.Request) (erro
 // responses:
 //    200: description: successfully updated posts options
 func (s *Handler) SetOptions(w http.ResponseWriter, r *http.Request) (error, int) {
+	post_uid := r.URL.Query().Get("post_uid")
+	var options []*model.Option
+	err := json.NewDecoder(r.Body).Decode(&options)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+	user, err := GetCurrentUser(r)
+	if err != nil {
+		return err, http.StatusUnauthorized
+	}
+	if post_uid == "" {
+		return ErrMissingParam(w, "post_uid", s.rlog)
+	}
+	post, err := s.postRepo.GetByUid(r.Context(), post_uid)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if user.ID != post.UserID {
+		return err, http.StatusUnauthorized
+	}
+	for _, v := range options {
+		v.PostUid = post_uid
+	}
+	err = s.postRepo.SetOptions(r.Context(), post, options)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
 	return nil, http.StatusOK
 }

@@ -42,3 +42,10 @@ CREATE TABLE group_user (
   FOREIGN KEY(group_id) REFERENCES groups(id),
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+CREATE TABLE options (
+  post_uid varchar(255) NOT NULL,
+  opt_key varchar(255) NOT NULL,
+  opt_value varchar(255) NOT NULL,
+  FOREIGN KEY(post_uid) REFERENCES posts(unique_id) ON DELETE CASCADE
+);

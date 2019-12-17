@@ -88,6 +88,20 @@
         }
       }
     },
+    "/config": {
+      "get": {
+        "description": "Returns relevant server settings",
+        "operationId": "getConfig",
+        "responses": {
+          "200": {
+            "description": "Configuration",
+            "schema": {
+              "$ref": "#/definitions/Configuration"
+            }
+          }
+        }
+      }
+    },
     "/group/adduser": {
       "post": {
         "description": "Adds a user (if exists) to a group (if exists)",
@@ -354,9 +368,44 @@
         }
       }
     },
+    "/post/setoptions": {
+      "post": {
+        "description": "Set a List of options for a post",
+        "tags": [
+          "post"
+        ],
+        "operationId": "setOptions",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "PostUid",
+            "name": "post_uid",
+            "in": "query",
+            "required": true
+          },
+          {
+            "x-go-name": "Options",
+            "name": "options",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Option"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": " successfully updated posts options"
+          }
+        }
+      }
+    },
     "/post/upload": {
       "post": {
-        "description": "\u003cp\u003eTakes, processes and persist posts data\nA post file request model.\nParameter \"Method\" is an integer and takes following numbers:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: 101 Method\u003c/li\u003e\n\u003cli\u003e1: Lotus Blossum\u003c/li\u003e\u003c/ul\u003e\n\u003cp\u003eType is an integer and describes the file type:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: image\u003c/li\u003e\n\u003cli\u003e1: video\u003c/li\u003e\u003c/ul\u003e",
+        "description": "\u003cp\u003eTakes, processes and persist posts data\nA post file request model.\nParameter \"Method\" is an integer and takes following numbers:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: 101 Method\u003c/li\u003e\n\u003cli\u003e1: Lotus Blossum\u003c/li\u003e\n\u003cli\u003e2: Scamper\u003c/li\u003e\n\u003cli\u003e3: Diese eine andere, ka...\u003c/li\u003e\u003c/ul\u003e\n\u003cp\u003eType is an integer and describes the file type:\u003c/p\u003e\n\u003cul\u003e\u003cli\u003e0: image\u003c/li\u003e\n\u003cli\u003e1: video\u003c/li\u003e\u003c/ul\u003e",
         "consumes": [
           "multipart/form-data"
         ],
@@ -375,7 +424,8 @@
             "type": "string",
             "x-go-name": "Title",
             "name": "title",
-            "in": "formData"
+            "in": "formData",
+            "required": true
           },
           {
             "type": "string",
@@ -386,13 +436,16 @@
           {
             "enum": [
               0,
-              1
+              1,
+              2,
+              3
             ],
             "type": "integer",
             "format": "int64",
             "x-go-name": "Method",
             "name": "method",
-            "in": "formData"
+            "in": "formData",
+            "required": true
           },
           {
             "enum": [
@@ -403,13 +456,15 @@
             "format": "int64",
             "x-go-name": "Type",
             "name": "type",
-            "in": "formData"
+            "in": "formData",
+            "required": true
           },
           {
             "type": "file",
             "x-go-name": "File",
             "name": "file",
-            "in": "formData"
+            "in": "formData",
+            "required": true
           }
         ],
         "responses": {
@@ -438,6 +493,31 @@
     }
   },
   "definitions": {
+    "Configuration": {
+      "description": "A response model for the config endpoint",
+      "type": "object",
+      "properties": {
+        "image_path": {
+          "type": "string",
+          "x-go-name": "ImagePath"
+        },
+        "max_image_size": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MaxImageSize"
+        },
+        "max_video_size": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MaxVideoSize"
+        },
+        "video_path": {
+          "type": "string",
+          "x-go-name": "VideoPath"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    },
     "Group": {
       "description": "Group model",
       "type": "object",
@@ -472,6 +552,20 @@
       },
       "x-go-package": "database/sql"
     },
+    "Option": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "value": {
+          "type": "string",
+          "x-go-name": "Value"
+        }
+      },
+      "x-go-package": "gitlab.com/innoserver/pkg/model"
+    },
     "Post": {
       "description": "A post request model",
       "type": "object",
@@ -488,6 +582,13 @@
           "type": "integer",
           "format": "int64",
           "x-go-name": "Method"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "x-go-name": "Options"
         },
         "parent_id": {
           "$ref": "#/definitions/NullInt32"

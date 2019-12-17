@@ -30,6 +30,7 @@ type Post struct {
 	Method    int           `json:"method"`
 	Type      int           `json:"type"`
 	GroupID   sql.NullInt32 `json:"group_id" db:"group_id"`
+	Options   []*Option     `json:"options"`
 }
 
 // A post request model
