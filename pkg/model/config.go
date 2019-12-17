@@ -19,4 +19,16 @@ type Config struct {
 	ApiKey                        string `json:"api_key"`
 	MaxImageSize                  int64  `json:"max_image_size"`
 	MaxVideoSize                  int64  `json:"max_video_size"`
+	ImagePath                     string `json:"image_path"`
+	VideoPath                     string `json:"video_path"`
+}
+
+// A response model for the config endpoint
+//
+// swagger:model
+type Configuration struct {
+	MaxImageSize int64  `json:"max_image_size"`
+	MaxVideoSize int64  `json:"max_video_size"`
+	ImagePath    string `json:"image_path"`
+	VideoPath    string `json:"video_path"`
 }
