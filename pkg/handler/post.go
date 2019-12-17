@@ -17,7 +17,9 @@ import (
 //   A post file request model.
 //   Parameter "Method" is an integer and takes following numbers:</p>
 //     <ul><li>0: 101 Method</li>
-//     <li>1: Lotus Blossum</li></ul>
+//     <li>1: Lotus Blossum</li>
+//     <li>2: Scamper</li>
+//     <li>3: Diese eine andere, ka...</li></ul>
 //   <p>Type is an integer and describes the file type:</p>
 //     <ul><li>0: image</li>
 //     <li>1: video</li></ul>

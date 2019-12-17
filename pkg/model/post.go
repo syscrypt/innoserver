@@ -74,7 +74,7 @@ type PostFileBodyParams struct {
 
 	// required: true
 	// in: formData
-	// enum: 0,1
+	// enum: 0,1,2,3
 	Method int `json:"method"`
 
 	// required: true
