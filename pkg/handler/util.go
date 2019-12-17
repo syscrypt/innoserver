@@ -32,7 +32,7 @@ func hashAndSalt(passwd []byte) string {
 func GenerateToken(user *model.User, secret []byte) (*model.TokenResponse, error) {
 	response := &model.TokenResponse{}
 	var err error
-	expirationTime := time.Now().Add(5 * time.Hour)
+	expirationTime := time.Now().Add(9999 * time.Hour)
 	claims := &model.Claims{
 		Email: user.Email,
 		StandardClaims: jwt.StandardClaims{
