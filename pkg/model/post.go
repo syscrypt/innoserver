@@ -14,6 +14,7 @@ const (
 const (
 	Method101 = iota
 	MethodLotusBlossum
+	MethodScamper
 )
 
 // A post request model
