@@ -103,6 +103,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
+	groupRouter.Path("/join").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.JoinGroup))
 	groupRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
 
 	inGroupRouter := groupRouter.PathPrefix("").Subrouter()

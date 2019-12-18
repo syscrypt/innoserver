@@ -201,3 +201,36 @@ func (s *Handler) SetVisibility(w http.ResponseWriter, r *http.Request) (error, 
 	}
 	return nil, http.StatusOK
 }
+
+// JoinGroup swagger:route GET /group/join group joinGroup
+//
+// Add current user to a public group
+//
+// responses:
+//     200: description: added current user to group
+//     500: description: server internal error
+func (s *Handler) JoinGroup(w http.ResponseWriter, r *http.Request) (error, int) {
+	user, err := GetCurrentUser(r)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	group_uid := r.URL.Query().Get("group_uid")
+	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	if err != nil {
+		return logResponse(w, "error fetching group from db",
+			s.rlog.WithField("group_uid", group_uid).WithError(err),
+			http.StatusInternalServerError)
+	}
+	if group.ID != 0 && group.Public == true {
+		err = s.groupRepo.AddUserToGroup(r.Context(), user, group)
+		if err != nil {
+			return err, http.StatusInternalServerError
+		}
+		return nil, http.StatusOK
+	}
+	return logResponse(w, "couldn't add requesting user to group",
+		s.rlog.WithFields(logrus.Fields{
+			"user":  user.Email,
+			"group": group.Title,
+		}), http.StatusInternalServerError)
+}
