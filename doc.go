@@ -1,5 +1,4 @@
-// Title:
-//     Interdisciplinary Project - Innoserver
+// Interdisciplinary Project - Innoserver:
 //
 // Terms Of Service:
 // there are no TOS at this moment, use at your own risk we take no responsibility
