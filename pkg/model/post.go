@@ -62,6 +62,17 @@ type FetchPostsParams struct {
 	GroupUid string `json:"group_uid"`
 }
 
+// swagger:parameters find
+type FetchPostsWithTitle struct {
+	// required: true
+	// in: query
+	FetchPostsParams
+
+	// required: true
+	// in: query
+	Title string `json:"title"`
+}
+
 // swagger:parameters uploadPost
 type PostFileBodyParams struct {
 	// in: query

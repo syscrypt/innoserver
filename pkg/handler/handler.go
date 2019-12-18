@@ -18,10 +18,11 @@ type userRepository interface {
 
 type postRepository interface {
 	uniqueID
-	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
 	SelectByParent(ctx context.Context, parent *model.Post) ([]*model.Post, error)
-	GetByTitle(ctx context.Context, title string) ([]*model.Post, error)
+	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
+	GetByTitle(ctx context.Context, title string, limit int64) ([]*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
+	GetByTitleInGroup(ctx context.Context, title string, group *model.Group, limit int64) ([]*model.Post, error)
 	GetByUid(ctx context.Context, uid string) (*model.Post, error)
 	SelectLatest(ctx context.Context, limit uint64) ([]*model.Post, error)
 	SelectLatestOfGroup(ctx context.Context, group *model.Group, limit uint64) ([]*model.Post, error)
@@ -95,6 +96,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter := router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/upload").Methods("POST", "GET", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
+	postRouter.Path("/find").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Find))
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
 	postRouter.Path("/setoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.SetOptions))

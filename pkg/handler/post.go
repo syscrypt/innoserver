@@ -198,3 +198,45 @@ func (s *Handler) SetOptions(w http.ResponseWriter, r *http.Request) (error, int
 	}
 	return nil, http.StatusOK
 }
+
+// Find swagger:route GET /post/find post find
+//
+// Fetch latest posts with title
+//
+// responses:
+//    200: []Post
+//    400: description: Query error
+//    500: description: Internal error
+func (s *Handler) Find(w http.ResponseWriter, r *http.Request) (error, int) {
+	title := r.URL.Query().Get("title")
+	count := r.URL.Query().Get("limit")
+	group_uid := r.URL.Query().Get("group_uid")
+	icount, err := strconv.Atoi(count)
+	var group *model.Group
+	s.log.WithFields(logrus.Fields{
+		"limit":     count,
+		"group_uid": group_uid,
+		"title":     title,
+	}).Infoln("fetching posts with title")
+	if count == "" || err != nil {
+		return logResponse(w, "missing parameter in request query, or wrong type",
+			s.rlog.WithField("limit", count), http.StatusBadRequest)
+	}
+	group, err = s.groupRepo.GetByUid(r.Context(), group_uid)
+	if err != nil && err != sql.ErrNoRows {
+		return err, http.StatusBadRequest
+	}
+	var posts []*model.Post
+	if group.ID == 0 {
+		posts, err = s.postRepo.GetByTitle(r.Context(), title, int64(icount))
+	} else {
+		posts, err = s.postRepo.GetByTitleInGroup(r.Context(), title, group, int64(icount))
+	}
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return WriteJsonResp(w, posts)
+}

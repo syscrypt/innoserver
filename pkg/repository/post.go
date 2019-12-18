@@ -14,6 +14,7 @@ type postRepository struct {
 	persist             *sqlx.Stmt
 	selectByUserID      *sqlx.Stmt
 	getByTitle          *sqlx.Stmt
+	getByTitleInGroup   *sqlx.Stmt
 	getByUID            *sqlx.Stmt
 	selectByParent      *sqlx.Stmt
 	selectLatest        *sqlx.Stmt
@@ -38,7 +39,15 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
 	getByTitle, _ := sqlz.Newx(db).Select("*").From("posts").
-		Where(sqlz.Like("title", "%?%")).ToSQL(false)
+		Where(sqlz.IsNull("parent_id"), sqlz.IsNull("group_id")).
+		Where(sqlz.Like("title", "%?%")).
+		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
+
+	getByTitleInGroup, _ := sqlz.Newx(db).Select("*").From("posts").
+		Where(sqlz.IsNull("parent_id")).
+		Where(sqlz.Like("title", "%?%")).
+		Where(sqlz.Eq("group_id", "?")).
+		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
 	getByUid, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
@@ -67,7 +76,11 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	ctxGetByTitle, err := db.PreparexContext(ctx, getByTitle)
+	ctxGetByTitle, err := db.PreparexContext(ctx, getByTitle+limit)
+	if err != nil {
+		return nil, err
+	}
+	ctxGetByTitleInGroup, err := db.PreparexContext(ctx, getByTitleInGroup+limit)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +123,7 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 		addOptions:          ctxAddOptions,
 		removeOptions:       ctxRemoveOptions,
 		selectOptions:       ctxSelectOptions,
+		getByTitleInGroup:   ctxGetByTitleInGroup,
 	}, err
 }
 
@@ -122,6 +136,9 @@ func (s *postRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.getByTitle.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.getByTitleInGroup.Close(); err != nil {
 		errorOccured = err
 	}
 	if err := s.getByUID.Close(); err != nil {
@@ -157,9 +174,19 @@ func (s *postRepository) SelectByUserID(ctx context.Context, id int) ([]*model.P
 	return posts, err
 }
 
-func (s *postRepository) GetByTitle(ctx context.Context, title string) ([]*model.Post, error) {
+func (s *postRepository) GetByTitle(ctx context.Context, title string, limit int64) ([]*model.Post, error) {
 	posts := []*model.Post{}
-	err := s.getByTitle.SelectContext(ctx, posts, title)
+	err := s.getByTitle.SelectContext(ctx, &posts, "%"+title+"%", limit)
+	if err == nil {
+		err = s.appendOptionsMult(ctx, posts)
+	}
+	return posts, err
+}
+
+func (s *postRepository) GetByTitleInGroup(ctx context.Context, title string,
+	group *model.Group, limit int64) ([]*model.Post, error) {
+	posts := []*model.Post{}
+	err := s.getByTitleInGroup.SelectContext(ctx, &posts, "%"+title+"%", group.ID, limit)
 	if err == nil {
 		err = s.appendOptionsMult(ctx, posts)
 	}
