@@ -73,9 +73,6 @@ func generateFileName() string {
 func initNewPostUpload(post *model.Post, s *Handler, r *http.Request) error {
 	var err error
 	post.Title = r.FormValue("title")
-	if post.Title == "" {
-		return errors.New("missing parameter title in request query")
-	}
 	parentUid := r.FormValue("parent_uid")
 	post.Method, err = strconv.Atoi(r.FormValue("method"))
 	if err != nil {
@@ -95,6 +92,9 @@ func initNewPostUpload(post *model.Post, s *Handler, r *http.Request) error {
 	parent, err := s.postRepo.GetByUid(r.Context(), parentUid)
 	if err != nil && err != sql.ErrNoRows {
 		return err
+	}
+	if post.Title == "" && parent.ID == 0 {
+		return errors.New("missing parameter title in request query")
 	}
 	if parent != nil && parent.ID != 0 {
 		post.ParentID.Int32 = int32(parent.ID)

@@ -67,7 +67,6 @@ type PostFileBodyParams struct {
 	// in: query
 	GroupUid string `json:"group_uid"`
 
-	// required: true
 	// in: formData
 	Title string `json:"title"`
 
