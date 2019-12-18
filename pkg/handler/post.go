@@ -41,7 +41,7 @@ func (s *Handler) UploadPost(w http.ResponseWriter, r *http.Request) (error, int
 	post := &model.Post{}
 	err = initNewPostUpload(post, s, r)
 	if err != nil {
-		s.rlog.WithError(err)
+		return logResponse(w, "upload failed", s.rlog.WithError(err), http.StatusBadRequest)
 	}
 	s.log.WithFields(logrus.Fields{
 		"title": post.Title, "user": user.Name,
