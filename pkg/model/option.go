@@ -7,7 +7,7 @@ type Option struct {
 	PostUid string `json:"-" db:"post_uid"`
 }
 
-// swagger:parameters setOptions
+// swagger:parameters setOptions AddOptions
 type AddOptionReqBody struct {
 	// in: query
 	// required: true

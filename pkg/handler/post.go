@@ -240,3 +240,40 @@ func (s *Handler) Find(w http.ResponseWriter, r *http.Request) (error, int) {
 	}
 	return WriteJsonResp(w, posts)
 }
+
+
+// AddOptions swagger:route POST /post/addoptions post AddOptions
+//
+// Set a List of options for a post
+//
+// responses:
+//    200: description: successfully added posts options
+func (s* Handler) AddOptions(w http.ResponseWriter, r *http.Request) (error, int) {
+	post_uid := r.URL.Query().Get("post_uid")
+	var options []*model.Option
+	err := json.NewDecoder(r.Body).Decode(&options)
+	if err != nil {
+		return err, http.StatusBadRequest
+	}
+	user, err := GetCurrentUser(r)
+	if post_uid == "" {
+		return ErrMissingParam(w, "post_uid", s.rlog)
+	}
+	post, err := s.postRepo.GetByUid(r.Context(), post_uid)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if user.ID != post.UserID {
+		return err, http.StatusUnauthorized
+	}
+	for _, v := range options {
+		v.PostUid = post_uid
+	}
+
+	err = s.postRepo.AddOptions(r.Context(), post, options)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	return nil, http.StatusOK
+
+}
