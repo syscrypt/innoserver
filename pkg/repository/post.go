@@ -30,29 +30,29 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	listAllByUserID, _ := sqlz.Newx(db).Select("*").From("posts").
 		Where(sqlz.Eq("user_id", "?")).ToSQL(false)
 
-	selectLatest, _ := sqlz.Newx(db).Select("*").From("posts").
+	selectLatest, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.IsNull("parent_id"), sqlz.IsNull("group_id")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
-	selectLatestOfGroup, _ := sqlz.Newx(db).Select("*").From("posts").
+	selectLatestOfGroup, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.IsNull("parent_id"), sqlz.Eq("group_id", "?")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
-	getByTitle, _ := sqlz.Newx(db).Select("*").From("posts").
+	getByTitle, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.IsNull("parent_id"), sqlz.IsNull("group_id")).
 		Where(sqlz.Like("title", "%?%")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
-	getByTitleInGroup, _ := sqlz.Newx(db).Select("*").From("posts").
+	getByTitleInGroup, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.IsNull("parent_id")).
 		Where(sqlz.Like("title", "%?%")).
 		Where(sqlz.Eq("group_id", "?")).
 		OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
-	getByUid, _ := sqlz.Newx(db).Select("*").From("posts").
+	getByUid, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
 
-	selectChildren, _ := sqlz.Newx(db).Select("*").From("posts").
+	selectChildren, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.Eq("parent_id", "?")).OrderBy(sqlz.Desc("created_at")).ToSQL(false)
 
 	persist, _ := sqlz.Newx(db).InsertInto("posts").Columns("title", "user_id", "path",
