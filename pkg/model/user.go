@@ -15,6 +15,13 @@ type User struct {
 	Password string `json:"password"`
 }
 
+// swagger:model
+type UserWithPostsGroups struct {
+	User
+	Groups []*Group `json:"groups"`
+	Posts  []*Post  `json:"posts"`
+}
+
 // An user request model
 //
 // swagger:parameters login register

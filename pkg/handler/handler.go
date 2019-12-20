@@ -19,7 +19,7 @@ type userRepository interface {
 type postRepository interface {
 	uniqueID
 	SelectByParent(ctx context.Context, parent *model.Post) ([]*model.Post, error)
-	SelectByUserID(ctx context.Context, id int) ([]*model.Post, error)
+	SelectByUser(ctx context.Context, user *model.User) ([]*model.Post, error)
 	GetByTitle(ctx context.Context, title string, limit int64) ([]*model.Post, error)
 	Persist(ctx context.Context, post *model.Post) error
 	GetByTitleInGroup(ctx context.Context, title string, group *model.Group, limit int64) ([]*model.Post, error)
@@ -40,6 +40,7 @@ type groupRepository interface {
 	IsUserInGroup(ctx context.Context, user *model.User, group *model.Group) (bool, error)
 	GetUsersInGroup(ctx context.Context, group *model.Group) ([]*model.User, error)
 	UpdateVisibility(ctx context.Context, group *model.Group) error
+	SelectByUser(ctx context.Context, user *model.User) ([]*model.Group, error)
 }
 
 type uniqueID interface {
@@ -86,6 +87,9 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "rlog", s.rlog))
 	router.Path("/config").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetConfig))
 
+	userRouter := router.PathPrefix("/user").Subrouter()
+	userRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.UserInfo))
+
 	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
@@ -100,7 +104,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/getchildren").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetChildren))
 	postRouter.Path("/selectlatest").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.FetchLatestPosts))
 	postRouter.Path("/setoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.SetOptions))
-	postRouter.Path("/addoptions").Methods("POST","OPTIONS").HandlerFunc(errorWrapper(s.AddOptions))
+	postRouter.Path("/addoptions").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddOptions))
 	postRouter.Use(authenticationMiddleware)
 
 	groupRouter := router.PathPrefix("/group").Subrouter()
@@ -126,6 +130,8 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authRouter.Use(keyMiddleware)
 	postRouter.Use(keyMiddleware)
 	groupRouter.Use(keyMiddleware)
+	userRouter.Use(keyMiddleware)
+	userRouter.Use(authenticationMiddleware)
 	groupRouter.Use(authenticationMiddleware)
 	postRouter.Use(authenticationMiddleware)
 	inGroupRouter.Use(groupMiddleware)

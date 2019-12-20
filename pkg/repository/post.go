@@ -27,7 +27,7 @@ type postRepository struct {
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	ctx := context.Background()
 	limit := " LIMIT ?"
-	listAllByUserID, _ := sqlz.Newx(db).Select("*").From("posts").
+	listAllByUserID, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
 		Where(sqlz.Eq("user_id", "?")).ToSQL(false)
 
 	selectLatest, _ := sqlz.Newx(db).Select("*").From("detailed_posts").
@@ -165,9 +165,9 @@ func (s *postRepository) Close() error {
 	return errorOccured
 }
 
-func (s *postRepository) SelectByUserID(ctx context.Context, id int) ([]*model.Post, error) {
+func (s *postRepository) SelectByUser(ctx context.Context, user *model.User) ([]*model.Post, error) {
 	posts := []*model.Post{}
-	err := s.selectByUserID.SelectContext(ctx, posts, id)
+	err := s.selectByUserID.SelectContext(ctx, &posts, user.ID)
 	if err == nil {
 		err = s.appendOptionsMult(ctx, posts)
 	}

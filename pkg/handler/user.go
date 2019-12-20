@@ -61,3 +61,29 @@ func (s *Handler) Register(w http.ResponseWriter, r *http.Request) (error, int) 
 	}
 	return WriteTokenResp(w, creds, []byte(s.config.JwtSecret))
 }
+
+// Register swagger:route GET /user/info user userInfo
+//
+// Fetch user Information with groups and posts
+//
+// responses:
+//     200: UserWithPostsGroups
+//     500: description: server internal error
+func (s *Handler) UserInfo(w http.ResponseWriter, r *http.Request) (error, int) {
+	user, err := GetCurrentUser(r)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	groups, err := s.groupRepo.SelectByUser(r.Context(), user)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	posts, err := s.postRepo.SelectByUser(r.Context(), user)
+	resp := &model.UserWithPostsGroups{
+		User:   *user,
+		Groups: groups,
+		Posts:  posts,
+	}
+	resp.User.Password = ""
+	return WriteJsonResp(w, resp)
+}

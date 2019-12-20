@@ -17,6 +17,7 @@ type groupRepository struct {
 	stmtGetUsersInGroup  *sqlx.Stmt
 	stmtGetUserIDsInGrp  *sqlx.Stmt
 	stmtUpdateVisibility *sqlx.Stmt
+	stmtSelectByUser     *sqlx.Stmt
 }
 
 func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
@@ -39,6 +40,10 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 
 	updateVisibility, _ := sqlz.Newx(db).Update("groups").Set("public", "?").
 		Where(sqlz.Eq("id", "?")).ToSQL(false)
+
+	selectByUser, _ := sqlz.Newx(db).Select("g.*").From("group_user gu").
+		LeftJoin("groups g", sqlz.Eq("g.id", sqlz.Indirect("gu.group_id"))).
+		Where(sqlz.Eq("gu.user_id", "?")).ToSQL(false)
 
 	ctxPersist, err := db.PreparexContext(ctx, persist)
 	if err != nil {
@@ -64,6 +69,7 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxSelectByUser, err := db.PreparexContext(ctx, selectByUser)
 	return &groupRepository{
 		persistGroup:         ctxPersist,
 		getByUid:             ctxGetByUid,
@@ -71,6 +77,7 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 		stmtGetUsersInGroup:  ctxGetUsersInGroup,
 		stmtGetUserIDsInGrp:  ctxGetUserIDsInGrp,
 		stmtUpdateVisibility: ctxUpdateVisibility,
+		stmtSelectByUser:     ctxSelectByUser,
 	}, err
 }
 
@@ -92,6 +99,9 @@ func (s *groupRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.stmtUpdateVisibility.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.stmtSelectByUser.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -149,4 +159,10 @@ func (s *groupRepository) IsUserInGroup(ctx context.Context, user *model.User, g
 func (s *groupRepository) UpdateVisibility(ctx context.Context, group *model.Group) error {
 	_, err := s.stmtUpdateVisibility.ExecContext(ctx, group.Public, group.ID)
 	return err
+}
+
+func (s *groupRepository) SelectByUser(ctx context.Context, user *model.User) ([]*model.Group, error) {
+	groups := []*model.Group{}
+	err := s.stmtSelectByUser.SelectContext(ctx, &groups, user.ID)
+	return groups, err
 }
