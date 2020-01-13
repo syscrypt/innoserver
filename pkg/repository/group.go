@@ -18,6 +18,7 @@ type groupRepository struct {
 	stmtGetUserIDsInGrp  *sqlx.Stmt
 	stmtUpdateVisibility *sqlx.Stmt
 	stmtSelectByUser     *sqlx.Stmt
+	stmtRemove           *sqlx.Stmt
 }
 
 func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
@@ -45,6 +46,8 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 		LeftJoin("groups g", sqlz.Eq("g.id", sqlz.Indirect("gu.group_id"))).
 		Where(sqlz.Eq("gu.user_id", "?")).ToSQL(false)
 
+	remove, _ := sqlz.Newx(db).DeleteFrom("groups").Where(sqlz.Eq("id", "?")).ToSQL(false)
+
 	ctxPersist, err := db.PreparexContext(ctx, persist)
 	if err != nil {
 		return nil, err
@@ -70,6 +73,13 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 		return nil, err
 	}
 	ctxSelectByUser, err := db.PreparexContext(ctx, selectByUser)
+	if err != nil {
+		return nil, err
+	}
+	ctxRemoveGroup, err := db.PreparexContext(ctx, remove)
+	if err != nil {
+		return nil, err
+	}
 	return &groupRepository{
 		persistGroup:         ctxPersist,
 		getByUid:             ctxGetByUid,
@@ -78,6 +88,7 @@ func NewGroupRepository(db *sqlx.DB) (*groupRepository, error) {
 		stmtGetUserIDsInGrp:  ctxGetUserIDsInGrp,
 		stmtUpdateVisibility: ctxUpdateVisibility,
 		stmtSelectByUser:     ctxSelectByUser,
+		stmtRemove:           ctxRemoveGroup,
 	}, err
 }
 
@@ -102,6 +113,9 @@ func (s *groupRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.stmtSelectByUser.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.stmtRemove.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -165,4 +179,9 @@ func (s *groupRepository) SelectByUser(ctx context.Context, user *model.User) ([
 	groups := []*model.Group{}
 	err := s.stmtSelectByUser.SelectContext(ctx, &groups, user.ID)
 	return groups, err
+}
+
+func (s *groupRepository) RemoveGroup(ctx context.Context, group *model.Group) error {
+	_, err := s.stmtRemove.ExecContext(ctx, group.ID)
+	return err
 }

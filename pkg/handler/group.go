@@ -75,7 +75,7 @@ func (s *Handler) CreateGroup(w http.ResponseWriter, r *http.Request) (error, in
 //     500: description: server internal error
 func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error, int) {
 	body := &model.UserGroupRelation{}
-	group_uid := r.URL.Query().Get("group_uid")
+	groupUid := r.URL.Query().Get("group_uid")
 	err := json.NewDecoder(r.Body).Decode(body)
 	if err != nil {
 		return err, http.StatusBadRequest
@@ -84,7 +84,7 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 	if err != nil {
 		return err, http.StatusBadRequest
 	}
-	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -128,11 +128,11 @@ func (s *Handler) AddUserToGroup(w http.ResponseWriter, r *http.Request) (error,
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) ListGroupMembers(w http.ResponseWriter, r *http.Request) (error, int) {
-	group_uid := r.URL.Query().Get("group_uid")
-	if group_uid == "" {
+	groupUid := r.URL.Query().Get("group_uid")
+	if groupUid == "" {
 		return ErrMissingParam(w, "group_uid", s.rlog)
 	}
-	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -152,11 +152,11 @@ func (s *Handler) ListGroupMembers(w http.ResponseWriter, r *http.Request) (erro
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) GroupInfo(w http.ResponseWriter, r *http.Request) (error, int) {
-	group_uid := r.URL.Query().Get("group_uid")
-	if group_uid == "" {
+	groupUid := r.URL.Query().Get("group_uid")
+	if groupUid == "" {
 		return ErrMissingParam(w, "group_uid", s.rlog)
 	}
-	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
@@ -172,19 +172,19 @@ func (s *Handler) GroupInfo(w http.ResponseWriter, r *http.Request) (error, int)
 //     400: description: bad request
 //     500: description: server internal error
 func (s *Handler) SetVisibility(w http.ResponseWriter, r *http.Request) (error, int) {
-	group_uid := r.URL.Query().Get("group_uid")
+	groupUid := r.URL.Query().Get("group_uid")
 	visibility := r.URL.Query().Get("public")
-	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
 	if err != nil {
 		return logResponse(w, "error fetching group from db",
-			s.rlog.WithField("group_uid", group_uid).WithError(err),
+			s.rlog.WithField("group_uid", groupUid).WithError(err),
 			http.StatusInternalServerError)
 	}
 	bVisible, err := strconv.ParseBool(visibility)
 	if err != nil {
 		return logResponse(w, "couldn't set groups visibility to requested value",
 			s.rlog.WithFields(logrus.Fields{
-				"group_uid":  group_uid,
+				"group_uid":  groupUid,
 				"visibility": visibility,
 			}).WithError(err),
 			http.StatusBadRequest)
@@ -194,7 +194,7 @@ func (s *Handler) SetVisibility(w http.ResponseWriter, r *http.Request) (error, 
 	if err != nil {
 		return logResponse(w, "couldn't update group",
 			s.rlog.WithFields(logrus.Fields{
-				"group_uid": group_uid,
+				"group_uid": groupUid,
 				"title":     group.Title,
 			}).WithError(err),
 			http.StatusBadRequest)
@@ -214,11 +214,11 @@ func (s *Handler) JoinGroup(w http.ResponseWriter, r *http.Request) (error, int)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}
-	group_uid := r.URL.Query().Get("group_uid")
-	group, err := s.groupRepo.GetByUid(r.Context(), group_uid)
+	groupUid := r.URL.Query().Get("group_uid")
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
 	if err != nil {
 		return logResponse(w, "error fetching group from db",
-			s.rlog.WithField("group_uid", group_uid).WithError(err),
+			s.rlog.WithField("group_uid", groupUid).WithError(err),
 			http.StatusInternalServerError)
 	}
 	if group.ID != 0 && group.Public == true {
@@ -233,4 +233,29 @@ func (s *Handler) JoinGroup(w http.ResponseWriter, r *http.Request) (error, int)
 			"user":  user.Email,
 			"group": group.Title,
 		}), http.StatusInternalServerError)
+}
+
+// RemoveGroup swagger:route GET /group/remove group removeGroup
+//
+// Remove group and it's post from databse
+//
+// responses:
+//     200: description: group successfully removed
+//     400: description: bad request
+//     500: description: server internal error
+func (s *Handler) RemoveGroup(w http.ResponseWriter, r *http.Request) (error, int) {
+	groupUid := r.URL.Query().Get("group_uid")
+	group, err := s.groupRepo.GetByUid(r.Context(), groupUid)
+	if err != nil {
+		return logResponse(w, "error fetching group from db",
+			s.rlog.WithField("group_uid", groupUid).WithError(err),
+			http.StatusInternalServerError)
+	}
+	s.groupRepo.RemoveGroup(r.Context(), group)
+	if err != nil {
+		return logResponse(w, "error removing group from db",
+			s.rlog.WithField("group_uid", groupUid).WithError(err),
+			http.StatusInternalServerError)
+	}
+	return nil, http.StatusOK
 }

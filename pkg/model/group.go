@@ -27,7 +27,7 @@ type AddUserToGroupRequestBody struct {
 	Relation *UserGroupRelation `json:"relation"`
 }
 
-// swagger:parameters listGroupMembers groupInfo joinGroup
+// swagger:parameters listGroupMembers groupInfo joinGroup removeGroup
 type ListMembersParams struct {
 	// required: true
 	// in: query

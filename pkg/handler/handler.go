@@ -41,6 +41,7 @@ type groupRepository interface {
 	GetUsersInGroup(ctx context.Context, group *model.Group) ([]*model.User, error)
 	UpdateVisibility(ctx context.Context, group *model.Group) error
 	SelectByUser(ctx context.Context, user *model.User) ([]*model.Group, error)
+	RemoveGroup(ctx context.Context, group *model.Group) error
 }
 
 type uniqueID interface {
@@ -118,6 +119,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	adminRouter := inGroupRouter.PathPrefix("").Subrouter()
 	adminRouter.Path("/adduser").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.AddUserToGroup))
 	adminRouter.Path("/setvisibility").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.SetVisibility))
+	adminRouter.Path("/remove").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.RemoveGroup))
 
 	assetRouter := router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
