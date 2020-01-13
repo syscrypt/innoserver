@@ -52,8 +52,9 @@ type PostBodyParams struct {
 	Post *Post `json:"post"`
 }
 
-// swagger:parameters getPost
+// swagger:parameters getPost removeOptions
 type GetPostParams struct {
+	// required: true
 	// in: query
 	UniqueID string `json:"uid"`
 }
