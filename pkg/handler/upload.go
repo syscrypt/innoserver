@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -65,7 +66,9 @@ func initOutputDir(s *Handler, fType int) string {
 
 func generateFileName() string {
 	hash := sha256.New()
-	hash.Write([]byte(strconv.FormatInt(int64(rand.Uint64()), 10)))
+	s1 := rand.NewSource(time.Now().UnixNano())
+	rnd := rand.New(s1)
+	hash.Write([]byte(strconv.FormatInt(int64(rnd.Uint64()), 10)))
 	sha := base64.URLEncoding.EncodeToString(hash.Sum(nil))
 	return sha[:len(sha)-1]
 }
