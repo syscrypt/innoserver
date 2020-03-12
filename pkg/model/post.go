@@ -52,7 +52,7 @@ type PostBodyParams struct {
 	Post *Post `json:"post"`
 }
 
-// swagger:parameters getPost removeOptions
+// swagger:parameters getPost removeOptions removePost
 type GetPostParams struct {
 	// required: true
 	// in: query

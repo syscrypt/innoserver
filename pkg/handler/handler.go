@@ -30,6 +30,7 @@ type postRepository interface {
 	RemoveOptions(ctx context.Context, post *model.Post) error
 	SetOptions(ctx context.Context, post *model.Post, options []*model.Option) error
 	SelectOptions(ctx context.Context, post *model.Post) ([]*model.Option, error)
+	RemovePost(ctx context.Context, post *model.Post) error
 }
 
 type groupRepository interface {
@@ -99,6 +100,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Register))
 
 	postRouter := router.PathPrefix("/post").Subrouter()
+	postRouter.Path("/remove").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.RemovePost))
 	postRouter.Path("/upload").Methods("POST", "GET", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
 	postRouter.Path("/find").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Find))

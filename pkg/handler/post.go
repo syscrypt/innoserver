@@ -295,7 +295,30 @@ func (s *Handler) RemoveOptions(w http.ResponseWriter, r *http.Request) (error, 
 	if user.ID != post.UserID {
 		return err, http.StatusUnauthorized
 	}
-	err = s.postRepo.RemoveOptions(r.Context(), post)
+	return nil, http.StatusOK
+}
+
+// RemoveOptions swagger:route GET /post/remove post removePost
+//
+// Remove post
+//
+// responses:
+//    200: description: successfully removed post
+func (s *Handler) RemovePost(w http.ResponseWriter, r *http.Request) (error, int) {
+	postUid := r.URL.Query().Get("uid")
+
+	user, err := GetCurrentUser(r)
+	if postUid == "" {
+		return ErrMissingParam(w, "uid", s.rlog)
+	}
+	post, err := s.postRepo.GetByUid(r.Context(), postUid)
+	if err != nil {
+		return err, http.StatusInternalServerError
+	}
+	if user.ID != post.UserID {
+		return err, http.StatusUnauthorized
+	}
+	err = s.postRepo.RemovePost(r.Context(), post)
 	if err != nil {
 		return err, http.StatusInternalServerError
 	}

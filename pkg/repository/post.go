@@ -22,6 +22,7 @@ type postRepository struct {
 	addOptions          *sqlx.Stmt
 	removeOptions       *sqlx.Stmt
 	selectOptions       *sqlx.Stmt
+	removePost          *sqlx.Stmt
 }
 
 func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
@@ -68,6 +69,9 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	selectOptions, _ := sqlz.Newx(db).Select("*").From("options").
 		Where(sqlz.Eq("post_uid", "?")).ToSQL(false)
 
+	removePost, _ := sqlz.Newx(db).DeleteFrom("posts").
+		Where(sqlz.Eq("unique_id", "?")).ToSQL(false)
+
 	ctxPersistPost, err := db.PreparexContext(ctx, persist)
 	if err != nil {
 		return nil, err
@@ -112,6 +116,10 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctxRemovePost, err := db.PreparexContext(ctx, removePost)
+	if err != nil {
+		return nil, err
+	}
 	return &postRepository{
 		persist:             ctxPersistPost,
 		selectByUserID:      ctxSelectByUserID,
@@ -124,6 +132,7 @@ func NewPostRepository(db *sqlx.DB) (*postRepository, error) {
 		removeOptions:       ctxRemoveOptions,
 		selectOptions:       ctxSelectOptions,
 		getByTitleInGroup:   ctxGetByTitleInGroup,
+		removePost:          ctxRemovePost,
 	}, err
 }
 
@@ -160,6 +169,9 @@ func (s *postRepository) Close() error {
 		errorOccured = err
 	}
 	if err := s.selectOptions.Close(); err != nil {
+		errorOccured = err
+	}
+	if err := s.removePost.Close(); err != nil {
 		errorOccured = err
 	}
 	return errorOccured
@@ -285,4 +297,9 @@ func (s *postRepository) SelectOptions(ctx context.Context, post *model.Post) ([
 	options := []*model.Option{}
 	err := s.selectOptions.SelectContext(ctx, &options, post.UniqueID)
 	return options, err
+}
+
+func (s *postRepository) RemovePost(ctx context.Context, post *model.Post) error {
+	_, err := s.removePost.ExecContext(ctx, post.UniqueID)
+	return err
 }
