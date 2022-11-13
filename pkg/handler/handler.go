@@ -57,10 +57,14 @@ type Handler struct {
 	config *model.Config
 	log    *logrus.Entry
 	rlog   *logrus.Logger
+
+	router *mux.Router
 }
 
 func NewHandler(injections ...interface{}) *Handler {
 	handler := &Handler{}
+	handler.SetupRouter()
+
 	for _, i := range injections {
 		switch v := i.(type) {
 		case userRepository:
@@ -79,27 +83,22 @@ func NewHandler(injections ...interface{}) *Handler {
 	return handler
 }
 
-func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	router := mux.NewRouter()
-	s.log = s.log.WithFields(logrus.Fields{"url": r.URL.String()})
-	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
-	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
-	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
-	r = r.WithContext(context.WithValue(r.Context(), "log", s.log))
-	r = r.WithContext(context.WithValue(r.Context(), "rlog", s.rlog))
-	router.Path("/config").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetConfig))
+func (s *Handler) SetupRouter() {
+	s.router = mux.NewRouter()
 
-	userRouter := router.PathPrefix("/user").Subrouter()
+	s.router.Path("/config").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetConfig))
+
+	userRouter := s.router.PathPrefix("/user").Subrouter()
 	userRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.UserInfo))
 
-	swaggerRouter := router.PathPrefix("/swagger").Subrouter()
+	swaggerRouter := s.router.PathPrefix("/swagger").Subrouter()
 	swaggerRouter.Path("").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.Swagger))
 
-	authRouter := router.PathPrefix("/auth").Subrouter()
+	authRouter := s.router.PathPrefix("/auth").Subrouter()
 	authRouter.Path("/login").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Login))
 	authRouter.Path("/register").Methods("POST", "OPTIONS").HandlerFunc(errorWrapper(s.Register))
 
-	postRouter := router.PathPrefix("/post").Subrouter()
+	postRouter := s.router.PathPrefix("/post").Subrouter()
 	postRouter.Path("/remove").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.RemovePost))
 	postRouter.Path("/upload").Methods("POST", "GET", "OPTIONS").HandlerFunc(errorWrapper(s.UploadPost))
 	postRouter.Path("/get").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GetPost))
@@ -111,7 +110,7 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	postRouter.Path("/removeoptions").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.RemoveOptions))
 	postRouter.Use(authenticationMiddleware)
 
-	groupRouter := router.PathPrefix("/group").Subrouter()
+	groupRouter := s.router.PathPrefix("/group").Subrouter()
 	groupRouter.Path("/join").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.JoinGroup))
 	groupRouter.Path("/info").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.GroupInfo))
 
@@ -124,14 +123,14 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	adminRouter.Path("/setvisibility").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.SetVisibility))
 	adminRouter.Path("/remove").Methods("GET", "OPTIONS").HandlerFunc(errorWrapper(s.RemoveGroup))
 
-	assetRouter := router.PathPrefix("/assets").Subrouter()
+	assetRouter := s.router.PathPrefix("/assets").Subrouter()
 	assetRouter.PathPrefix("/images").Handler(http.StripPrefix("/assets/images",
 		http.FileServer(http.Dir("assets/images/"))))
 	assetRouter.PathPrefix("/videos").Handler(http.StripPrefix("/assets/videos",
 		http.FileServer(http.Dir("assets/videos/"))))
 
-	router.Use(corsMiddleware)
-	router.Use(logMiddleware)
+	s.router.Use(corsMiddleware)
+	s.router.Use(logMiddleware)
 	authRouter.Use(keyMiddleware)
 	postRouter.Use(keyMiddleware)
 	groupRouter.Use(keyMiddleware)
@@ -142,6 +141,14 @@ func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	inGroupRouter.Use(groupMiddleware)
 	postRouter.Use(groupMiddleware)
 	adminRouter.Use(adminMiddleware)
+}
 
-	router.ServeHTTP(w, r)
+func (s *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.log = s.log.WithFields(logrus.Fields{"url": r.URL.String()})
+	r = r.WithContext(context.WithValue(r.Context(), "config", s.config))
+	r = r.WithContext(context.WithValue(r.Context(), "user_repository", &s.userRepo))
+	r = r.WithContext(context.WithValue(r.Context(), "group_repository", &s.groupRepo))
+	r = r.WithContext(context.WithValue(r.Context(), "log", s.log))
+	r = r.WithContext(context.WithValue(r.Context(), "rlog", s.rlog))
+	s.router.ServeHTTP(w, r)
 }

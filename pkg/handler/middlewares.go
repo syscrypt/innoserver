@@ -107,7 +107,7 @@ func groupMiddleware(h http.Handler) http.Handler {
 
 func errorWrapper(f func(http.ResponseWriter, *http.Request) (error, int)) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ew := writer.New(w)
+		ew := writer.
 		config, ok := r.Context().Value("config").(*model.Config)
 		err, status := f(ew, r)
 		if err != nil {

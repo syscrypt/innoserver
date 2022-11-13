@@ -64,6 +64,7 @@ func main() {
 	if err != nil {
 		log.Errorln("error creating the group repository:", err)
 	}
+
 	defer func() {
 		log.Println("closing database statements")
 		if err = userRepository.Close(); err != nil {
@@ -76,6 +77,7 @@ func main() {
 			log.Errorln("group repository:", err.Error())
 		}
 	}()
+
 	logger := [2]*logrus.Logger{log, rlog}
 	srvStr := config.ServerAddress + ":" + config.ServerPort
 	srv := &http.Server{
